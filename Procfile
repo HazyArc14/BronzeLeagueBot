@@ -1,0 +1,1 @@
+worker: java $JAVA_OPTS -Dserver.port=$PORT -jar build/libs/bronze-league-bot-3.0.0.jar
