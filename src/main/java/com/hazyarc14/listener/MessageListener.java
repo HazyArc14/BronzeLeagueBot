@@ -191,7 +191,7 @@ public class MessageListener extends ListenerAdapter {
         voiceCommands += "!play <YouTube Link>\n" +
                 "!skip\n";
 
-        List<Command> commandList = commandRepository.findAll();
+        List<Command> commandList = commandRepository.findAll(Sort.by(Sort.Direction.DESC, "commandName"));
         for (Command command : commandList) {
             if (command.getActive()) {
                 if (command.getCommandFileExtension().equalsIgnoreCase("mp3")) {
