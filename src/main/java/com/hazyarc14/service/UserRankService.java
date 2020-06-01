@@ -101,6 +101,8 @@ public class UserRankService {
             try {
                 member = guild.retrieveMemberById(userRank.getUserId()).complete();
             } catch (ErrorResponseException e) {
+                if (e.getErrorCode() == 10007)
+                    userRanksRepository.delete(userRank);
                 return;
             }
 
