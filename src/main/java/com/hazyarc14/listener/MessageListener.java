@@ -97,9 +97,9 @@ public class MessageListener extends ListenerAdapter {
 
             Long targetUserId = 0L;
 
-            if (commandList.length > 2) {
-                if (commandList[1].matches("^<@\\d*>")) {
-                    targetUserId = Long.valueOf(commandList[1].substring(2, commandList[1].length() - 1));
+            if (commandList.length > 1) {
+                if (commandList[1].matches("^<@!\\d*>")) {
+                    targetUserId = Long.valueOf(commandList[1].substring(3, commandList[1].length() - 1));
                 }
             } else {
                 targetUserId = message.getAuthor().getIdLong();
@@ -230,7 +230,7 @@ public class MessageListener extends ListenerAdapter {
 
         String rankAllMessage = "```Current User Ranks:\n";
 
-        List<UserRank> userRankList = userRanksRepository.findAll(Sort.by(Sort.Direction.DESC, "rankingNbr"));
+        List<UserRank> userRankList = userRanksRepository.findAll(Sort.by(Sort.Direction.DESC, "rank"));
         for (UserRank userRank: userRankList) {
 
             rankAllMessage += userRank.getUserName() + " - " + userRank.getRank() + "\n";

@@ -156,27 +156,27 @@ public class UserRankService {
 
     }
 
-    public String calculateRoleByRank(Integer rankingNbr) {
+    public String calculateRoleByRank(Integer rank) {
 
-        if (rankingNbr >= BRONZE && rankingNbr < SILVER)
+        if (rank >= BRONZE && rank < SILVER)
             return "Bronze";
 
-        if (rankingNbr >= SILVER && rankingNbr < GOLD)
+        if (rank >= SILVER && rank < GOLD)
             return "Silver";
 
-        if (rankingNbr >= GOLD && rankingNbr < PLATINUM)
+        if (rank >= GOLD && rank < PLATINUM)
             return "Gold";
 
-        if (rankingNbr >= PLATINUM && rankingNbr < DIAMOND)
+        if (rank >= PLATINUM && rank < DIAMOND)
             return "Platinum";
 
-        if (rankingNbr >= DIAMOND && rankingNbr < MASTER)
+        if (rank >= DIAMOND && rank < MASTER)
             return "Diamond";
 
-        if (rankingNbr >= MASTER && rankingNbr < GRANDMASTER)
+        if (rank >= MASTER && rank < GRANDMASTER)
             return "Master";
 
-        if (rankingNbr >= GRANDMASTER)
+        if (rank >= GRANDMASTER)
             return "GrandMaster";
 
         return "";
