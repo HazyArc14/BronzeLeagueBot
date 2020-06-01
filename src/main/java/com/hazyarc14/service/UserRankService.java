@@ -2,19 +2,20 @@ package com.hazyarc14.service;
 
 import com.hazyarc14.model.UserRank;
 import com.hazyarc14.repository.UserRanksRepository;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -32,6 +33,8 @@ public class UserRankService {
     public static final Integer MAXRANK = 2200;
 
     public static final Integer minsPerPointEarned = 10;
+
+    private static final List<String> guildRoleNames = Arrays.asList("Bronze", "Silver", "Gold", "Platinum", "Diamond", "Master", "GrandMaster");
 
     @Autowired
     UserRanksRepository userRanksRepository;
@@ -72,32 +75,55 @@ public class UserRankService {
 
     }
 
-    public void updateUserRoleByRank(Guild guild, Member member, UserRank previousUserRank, UserRank userRank) {
+    public void updateRolesByUser(Guild guild, Member member, UserRank userRank) {
 
         List<Role> memberRoles = member.getRoles();
         List<Role> newMemberRoles = new ArrayList<>();
 
-        Role oldGuildRole = guild.getRolesByName(calculateRoleByRank(previousUserRank.getRank()), false).get(0);
         Role newGuildRole = guild.getRolesByName(calculateRoleByRank(userRank.getRank()), false).get(0);
 
-        if (oldGuildRole.getName() == newGuildRole.getName())
-            return;
-
         for (int i = 0; i < memberRoles.size(); i++) {
-
-            if (memberRoles.get(i).getName() != oldGuildRole.getName())
+            if (!guildRoleNames.contains(memberRoles.get(i).getName()))
                 newMemberRoles.add(memberRoles.get(i));
-
         }
 
         newMemberRoles.add(newGuildRole);
-
         guild.modifyMemberRoles(member, newMemberRoles).queue();
 
     }
 
-    @Scheduled(cron = "0 0 5 * * ?")
-    public void scheduledDecayCalculation() {
+    public void updateAllUserRoles(Guild guild) {
+
+        List<UserRank> userRankList = userRanksRepository.findAll();
+        userRankList.forEach(userRank -> {
+
+            Member member = null;
+            try {
+                member = guild.retrieveMemberById(userRank.getUserId()).complete();
+            } catch (ErrorResponseException e) {
+                return;
+            }
+
+            List<Role> memberRoles = member.getRoles();
+            List<Role> newMemberRoles = new ArrayList<>();
+
+            Role newGuildRole = guild.getRolesByName(calculateRoleByRank(userRank.getRank()), false).get(0);
+
+            for (int i = 0; i < memberRoles.size(); i++) {
+                if (!guildRoleNames.contains(memberRoles.get(i).getName()))
+                    newMemberRoles.add(memberRoles.get(i));
+            }
+
+            newMemberRoles.add(newGuildRole);
+            guild.modifyMemberRoles(member, newMemberRoles).queue();
+
+        });
+
+    }
+
+    public void applyDecayToUserRanks(JDA jda) {
+
+        Guild guild = jda.getGuildsByName("Bronze League", true).get(0);
 
         List<UserRank> userRankList = userRanksRepository.findAll();
         Timestamp currentTm = new Timestamp(System.currentTimeMillis());
@@ -116,16 +142,16 @@ public class UserRankService {
 
                     Integer pointsToRemove = calculateDecayValue(currentRank);
 
-                    UserRank previousUserRank = new UserRank(userRank);
                     userRank.setRank(currentRank - pointsToRemove);
                     userRanksRepository.save(userRank);
-//                    updateUserRoleByRank(event.getGuild(), eventMember, previousUserRank, userRank);
 
                 }
 
             }
 
         });
+
+        updateAllUserRoles(guild);
 
     }
 

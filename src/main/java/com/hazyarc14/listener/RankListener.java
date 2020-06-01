@@ -7,7 +7,6 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
-import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -122,10 +121,9 @@ public class RankListener extends ListenerAdapter {
                     Optional<UserRank> userRank = userRanksRepository.findById(member.getIdLong());
                     userRank.ifPresent(user -> {
 
-                        UserRank previousUserRank = new UserRank(user);
                         user.setLeftChannelTm(userLeaveTmstp);
                         user = userRankService.calculateUserRank(user);
-                        userRankService.updateUserRoleByRank(event.getGuild(), member, previousUserRank, user);
+                        userRankService.updateRolesByUser(event.getGuild(), member, user);
 
                     });
 
@@ -135,10 +133,9 @@ public class RankListener extends ListenerAdapter {
                 Optional<UserRank> userRank = userRanksRepository.findById(eventMember.getIdLong());
                 userRank.ifPresent(user -> {
 
-                    UserRank previousUserRank = new UserRank(user);
                     user.setLeftChannelTm(userLeaveTmstp);
                     user = userRankService.calculateUserRank(user);
-                    userRankService.updateUserRoleByRank(event.getGuild(), eventMember, previousUserRank, user);
+                    userRankService.updateRolesByUser(event.getGuild(), eventMember, user);
 
                 });
 
@@ -148,10 +145,9 @@ public class RankListener extends ListenerAdapter {
                 Optional<UserRank> userRank = userRanksRepository.findById(eventMember.getIdLong());
                 userRank.ifPresent(user -> {
 
-                    UserRank previousUserRank = new UserRank(user);
                     user.setLeftChannelTm(userLeaveTmstp);
                     user = userRankService.calculateUserRank(user);
-                    userRankService.updateUserRoleByRank(event.getGuild(), eventMember, previousUserRank, user);
+                    userRankService.updateRolesByUser(event.getGuild(), eventMember, user);
 
                 });
 

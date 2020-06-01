@@ -29,7 +29,6 @@ import org.springframework.stereotype.Service;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -64,6 +63,7 @@ public class MessageListener extends ListenerAdapter {
 
         if (event.getAuthor().isBot()) return;
 
+        Guild guild = event.getGuild();
         Message message = event.getMessage();
         String content = message.getContentRaw();
         String[] commandList = message.getContentRaw().split(" ");
@@ -88,6 +88,14 @@ public class MessageListener extends ListenerAdapter {
             }
 
             sendHelpMessage(event, isPrivate);
+
+        } else if (commandList[0].equalsIgnoreCase("!roleRebalance")) {
+
+            if (!isPrivate) {
+                message.delete().queue();
+            }
+
+            userRankService.updateAllUserRoles(guild);
 
         } else if (commandList[0].equalsIgnoreCase("!rank")) {
 
