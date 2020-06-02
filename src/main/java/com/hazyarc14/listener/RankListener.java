@@ -228,7 +228,21 @@ public class RankListener extends ListenerAdapter {
 
             Stream<Member> membersWithoutBot = members.stream().filter(member -> !member.getUser().isBot());
 
-            if (membersWithoutBot.count() == 2) {
+            if (membersWithoutBot.count() == 1) {
+
+                if (userRankProgressing.get()) {
+
+                    eventMemberUserRank.ifPresent(user -> {
+
+                        user.setLeftChannelTm(userMoveTmstp);
+                        user = userRankService.calculateUserRank(guild, eventMember, user);
+                        userRankService.updateRolesByUser(guild, eventMember, user);
+
+                    });
+
+                }
+
+            } else if (membersWithoutBot.count() == 2) {
 
                 //start counting for both individuals
                 membersWithoutBot.forEach(member -> {
