@@ -1,6 +1,7 @@
 package com.hazyarc14.listener;
 
 import com.hazyarc14.audio.GuildMusicManager;
+import com.hazyarc14.enums.RANK;
 import com.hazyarc14.model.Command;
 import com.hazyarc14.model.UserRank;
 import com.hazyarc14.repository.CommandRepository;
@@ -223,16 +224,32 @@ public class MessageListener extends ListenerAdapter {
 
         userRanksRepository.findById(targetUserId).ifPresent(userRank -> {
 
-            String rankMessage = userRank.getUserName() + "'s Current Rank is " + userRank.getRank();
+            Member targetMember = event.getGuild().getMemberById(targetUserId);
 
-            if (isPrivate)
-                event.getPrivateChannel().sendMessage(rankMessage).queue();
-            else
-                event.getChannel().sendMessage(rankMessage).queue(sentMessage -> {
-                    CompletableFuture.delayedExecutor(10, TimeUnit.SECONDS).execute(() -> {
-                        sentMessage.delete().queue();
+            RANK currentUserRank = userRankService.calculateRoleByRank(userRank.getRank());
+            List<Role> roles = event.getGuild().getRolesByName(currentUserRank.getRoleName(), false);
+
+            if (!roles.isEmpty()) {
+
+                Color rankColor = roles.get(0).getColor();
+
+                EmbedBuilder eb = new EmbedBuilder();
+
+                eb.setColor(rankColor);
+                eb.setTitle("Current Role is " + currentUserRank.getRoleName() + ".");
+                eb.setDescription("Rank " + userRank.getRank() + " of " + currentUserRank.next().getValue());
+                eb.setAuthor(userRank.getUserName(), null, targetMember.getUser().getAvatarUrl());
+
+                if (isPrivate)
+                    event.getPrivateChannel().sendMessage("Current Role & Rank").embed(eb.build()).queue();
+                else
+                    event.getChannel().sendMessage("Current Role & Rank").embed(eb.build()).queue(sentMessage -> {
+                        CompletableFuture.delayedExecutor(15, TimeUnit.SECONDS).execute(() -> {
+                            sentMessage.delete().queue();
+                        });
                     });
-                });
+
+            }
 
         });
 

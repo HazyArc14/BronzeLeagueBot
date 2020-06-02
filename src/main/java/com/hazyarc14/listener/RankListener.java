@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
@@ -60,12 +61,16 @@ public class RankListener extends ListenerAdapter {
         Optional<List<Member>> membersInChannel = Optional.ofNullable(event.getChannelJoined().getMembers());
         membersInChannel.ifPresent(members -> {
 
-            Stream<Member> membersWithoutBot = members.stream().filter(member -> !member.getUser().isBot());
+            List<Member> memberListWithoutBots = new ArrayList<>();
+            for (Member member : members) {
+                if (!member.getUser().isBot())
+                    memberListWithoutBots.add(member);
+            }
 
-            if (membersWithoutBot.count() == 2) {
+            if (memberListWithoutBots.size() == 2) {
 
                 //start counting for both individuals
-                membersWithoutBot.forEach(member -> {
+                memberListWithoutBots.forEach(member -> {
 
                     Optional<UserRank> userRank = userRanksRepository.findById(member.getIdLong());
                     userRank.ifPresent(user -> {
@@ -78,7 +83,7 @@ public class RankListener extends ListenerAdapter {
 
                 });
 
-            } else if (membersWithoutBot.count() > 2) {
+            } else if (memberListWithoutBots.size() > 2) {
 
                 //start counting for only the joined user
                 Optional<UserRank> userRank = userRanksRepository.findById(eventMember.getIdLong());
@@ -109,12 +114,16 @@ public class RankListener extends ListenerAdapter {
         Optional<List<Member>> membersInChannel = Optional.ofNullable(event.getChannelLeft().getMembers());
         membersInChannel.ifPresent(members -> {
 
-            Stream<Member> membersWithoutBot = members.stream().filter(member -> !member.getUser().isBot());
+            List<Member> memberListWithoutBots = new ArrayList<>();
+            for (Member member : members) {
+                if (!member.getUser().isBot())
+                    memberListWithoutBots.add(member);
+            };
 
-            if (membersWithoutBot.count() == 1) {
+            if (memberListWithoutBots.size() == 1) {
 
                 //update the leave tmstp for the remaining 1 member
-                membersWithoutBot.forEach(member -> {
+                memberListWithoutBots.forEach(member -> {
 
                     Optional<UserRank> userRank = userRanksRepository.findById(member.getIdLong());
                     userRank.ifPresent(user -> {
@@ -137,7 +146,7 @@ public class RankListener extends ListenerAdapter {
 
                 });
 
-            } else if (membersWithoutBot.count() > 1) {
+            } else if (memberListWithoutBots.size() > 1) {
 
                 //update the leave tmstp for only the member that left
                 Optional<UserRank> userRank = userRanksRepository.findById(eventMember.getIdLong());
@@ -184,28 +193,24 @@ public class RankListener extends ListenerAdapter {
 
                 });
 
-        } else if (event.getChannelLeft() == guild.getAfkChannel()) {
-
-            eventMemberUserRank.ifPresent(user -> {
-
-                user.setJoinedChannelTm(userMoveTmstp);
-                user.setLeftChannelTm(null);
-                userRanksRepository.save(user);
-
-            });
-
         }
 
         //Check the Left Channel to Update Users
         Optional<List<Member>> membersInLeftChannel = Optional.ofNullable(event.getChannelLeft().getMembers());
         membersInLeftChannel.ifPresent(members -> {
 
-            Stream<Member> membersWithoutBot = members.stream().filter(member -> !member.getUser().isBot());
+            if (event.getChannelLeft() == guild.getAfkChannel()) return;
 
-            if (membersWithoutBot.count() == 1) {
+            List<Member> memberListWithoutBots = new ArrayList<>();
+            for (Member member : members) {
+                if (!member.getUser().isBot())
+                    memberListWithoutBots.add(member);
+            }
+
+            if (memberListWithoutBots.size() == 1) {
 
                 //update the leave tmstp for the remaining 1 member
-                membersWithoutBot.forEach(member -> {
+                memberListWithoutBots.forEach(member -> {
 
                     Optional<UserRank> userRank = userRanksRepository.findById(member.getIdLong());
                     userRank.ifPresent(user -> {
@@ -226,9 +231,15 @@ public class RankListener extends ListenerAdapter {
         Optional<List<Member>> membersInJoinedChannel = Optional.ofNullable(event.getChannelJoined().getMembers());
         membersInJoinedChannel.ifPresent(members -> {
 
-            Stream<Member> membersWithoutBot = members.stream().filter(member -> !member.getUser().isBot());
+            if (event.getChannelJoined() == guild.getAfkChannel()) return;
 
-            if (membersWithoutBot.count() == 1) {
+            List<Member> memberListWithoutBots = new ArrayList<>();
+            for (Member member : members) {
+                if (!member.getUser().isBot())
+                    memberListWithoutBots.add(member);
+            }
+
+            if (memberListWithoutBots.size() == 1) {
 
                 if (userRankProgressing.get()) {
 
@@ -242,10 +253,10 @@ public class RankListener extends ListenerAdapter {
 
                 }
 
-            } else if (membersWithoutBot.count() == 2) {
+            } else if (memberListWithoutBots.size() == 2) {
 
                 //start counting for both individuals
-                membersWithoutBot.forEach(member -> {
+                memberListWithoutBots.forEach(member -> {
 
                     if (userRankProgressing.get()) {
 
@@ -277,7 +288,7 @@ public class RankListener extends ListenerAdapter {
 
                 });
 
-            } else if (membersWithoutBot.count() > 2) {
+            } else if (memberListWithoutBots.size() > 2) {
 
                 //start counting for only the joined user
                 eventMemberUserRank.ifPresent(user -> {

@@ -17,7 +17,7 @@ public class UserRank {
     private String userName;
 
     @Column(name = "rank")
-    private Integer rank;
+    private Double rank;
 
     @Column(name = "joined_channel_tm")
     private Timestamp joinedChannelTm;
@@ -27,7 +27,7 @@ public class UserRank {
 
     public UserRank() { }
 
-    public UserRank(Long userId, String userName, Integer rank, Timestamp joinedChannelTm, Timestamp leftChannelTm) {
+    public UserRank(Long userId, String userName, Double rank, Timestamp joinedChannelTm, Timestamp leftChannelTm) {
         this.userId = userId;
         this.userName = userName;
         this.rank = rank;
@@ -57,10 +57,10 @@ public class UserRank {
         this.userName = userName;
     }
 
-    public Integer getRank() {
+    public Double getRank() {
         return this.rank;
     }
-    public void setRank(Integer rank) {
+    public void setRank(Double rank) {
         this.rank = rank;
     }
 

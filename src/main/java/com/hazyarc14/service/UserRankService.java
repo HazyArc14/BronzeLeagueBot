@@ -1,12 +1,12 @@
 package com.hazyarc14.service;
 
+import com.hazyarc14.enums.RANK;
 import com.hazyarc14.model.UserRank;
 import com.hazyarc14.repository.UserRanksRepository;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,22 +18,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 public class UserRankService {
 
     public static final Logger log = LoggerFactory.getLogger(UserRankService.class);
 
-    public static final Integer BRONZE = 0;
-    public static final Integer SILVER = 100;
-    public static final Integer GOLD = 250;
-    public static final Integer PLATINUM = 500;
-    public static final Integer DIAMOND = 750;
-    public static final Integer MASTER = 1000;
-    public static final Integer GRANDMASTER = 2000;
-    public static final Integer MAXRANK = 2200;
+    public static final Double MINRANK = 0.0;
+    public static final Double MAXRANK = 2200.0;
 
-    public static final Integer minsPerPointEarned = 10;
+    public static final Double minsPerPointEarned = 10.0;
+    public static final Double serverBoosterBonus = 1.5;
 
     private static final List<String> guildRoleNames = Arrays.asList("Bronze", "Silver", "Gold", "Platinum", "Diamond", "Master", "GrandMaster");
 
@@ -45,7 +41,7 @@ public class UserRankService {
         UserRank userRank = new UserRank();
         userRank.setUserId(member.getIdLong());
         userRank.setUserName(member.getEffectiveName());
-        userRank.setRank(0);
+        userRank.setRank(0.0);
 
         userRanksRepository.save(userRank);
 
@@ -53,17 +49,25 @@ public class UserRankService {
 
     public UserRank calculateUserRank(Guild guild, Member member, UserRank userRank) {
 
-        Integer currentRank = userRank.getRank();
+        Double currentRank = userRank.getRank();
         Timestamp joinedTm = userRank.getJoinedChannelTm();
         Timestamp leftTm = userRank.getLeftChannelTm();
 
         // need to see how long they were in the channel and update rank
         Long minutesInChannel = TimeUnit.MINUTES.convert(leftTm.getTime() - joinedTm.getTime(), TimeUnit.MILLISECONDS);
-        Integer pointsToAdd = Math.floorDiv(minutesInChannel.intValue(), minsPerPointEarned);
+        AtomicReference<Double> pointsToAdd = new AtomicReference<>(Math.floor(minutesInChannel.doubleValue() / minsPerPointEarned));
 
-        Integer updatedRank = currentRank + pointsToAdd;
+        List<Member> serverBoosters = guild.getBoosters();
+        serverBoosters.forEach(booster -> {
+            if (member.getIdLong() == booster.getIdLong())
+                pointsToAdd.updateAndGet(v -> v * serverBoosterBonus);
+        });
+
+        Double updatedRank = currentRank + pointsToAdd.get();
         if (updatedRank > MAXRANK)
             updatedRank = MAXRANK;
+        if (updatedRank < MINRANK)
+            updatedRank = MINRANK;
 
         userRank.setRank(updatedRank);
 
@@ -78,15 +82,22 @@ public class UserRankService {
         List<Role> memberRoles = member.getRoles();
         List<Role> newMemberRoles = new ArrayList<>();
 
-        Role newGuildRole = guild.getRolesByName(calculateRoleByRank(userRank.getRank()), false).get(0);
+        RANK currentUserRank = calculateRoleByRank(userRank.getRank());
+        List<Role> roles = guild.getRolesByName(currentUserRank.getRoleName(), false);
 
-        for (int i = 0; i < memberRoles.size(); i++) {
-            if (!guildRoleNames.contains(memberRoles.get(i).getName()))
-                newMemberRoles.add(memberRoles.get(i));
+        if (!roles.isEmpty()) {
+
+            Role newGuildRole = roles.get(0);
+
+            for (int i = 0; i < memberRoles.size(); i++) {
+                if (!guildRoleNames.contains(memberRoles.get(i).getName()))
+                    newMemberRoles.add(memberRoles.get(i));
+            }
+
+            newMemberRoles.add(newGuildRole);
+            guild.modifyMemberRoles(member, newMemberRoles).queue();
+
         }
-
-        newMemberRoles.add(newGuildRole);
-        guild.modifyMemberRoles(member, newMemberRoles).queue();
 
     }
 
@@ -107,7 +118,8 @@ public class UserRankService {
             List<Role> memberRoles = member.getRoles();
             List<Role> newMemberRoles = new ArrayList<>();
 
-            Role newGuildRole = guild.getRolesByName(calculateRoleByRank(userRank.getRank()), false).get(0);
+            RANK currentUserRank = calculateRoleByRank(userRank.getRank());
+            Role newGuildRole = guild.getRolesByName(currentUserRank.getRoleName(), false).get(0);
 
             for (int i = 0; i < memberRoles.size(); i++) {
                 if (!guildRoleNames.contains(memberRoles.get(i).getName()))
@@ -130,7 +142,7 @@ public class UserRankService {
 
         userRankList.forEach(userRank -> {
 
-            Integer currentRank = userRank.getRank();
+            Double currentRank = userRank.getRank();
             Timestamp leftTm = userRank.getLeftChannelTm();
 
             if (leftTm != null) {
@@ -140,7 +152,7 @@ public class UserRankService {
 
                 if (daySinceChannelJoined > 7) {
 
-                    Integer pointsToRemove = calculateDecayValue(currentRank);
+                    Double pointsToRemove = calculateDecayValue(currentRank);
 
                     userRank.setRank(currentRank - pointsToRemove);
                     userRanksRepository.save(userRank);
@@ -155,57 +167,57 @@ public class UserRankService {
 
     }
 
-    public Integer calculateDecayValue(Integer rank) {
+    public Double calculateDecayValue(Double rank) {
 
-        if (rank >= BRONZE && rank < SILVER)
-            return 0;
+        if (rank < RANK.SILVER.getValue())
+            return 0.0;
 
-        if (rank >= SILVER && rank < GOLD)
-            return 1;
+        if (rank >= RANK.SILVER.getValue() && rank < RANK.GOLD.getValue())
+            return 1.0;
 
-        if (rank >= GOLD && rank < PLATINUM)
-            return 5;
+        if (rank >= RANK.GOLD.getValue() && rank < RANK.PLATINUM.getValue())
+            return 5.0;
 
-        if (rank >= PLATINUM && rank < DIAMOND)
-            return 10;
+        if (rank >= RANK.PLATINUM.getValue() && rank < RANK.DIAMOND.getValue())
+            return 10.0;
 
-        if (rank >= DIAMOND && rank < MASTER)
-            return 15;
+        if (rank >= RANK.DIAMOND.getValue() && rank < RANK.MASTER.getValue())
+            return 15.0;
 
-        if (rank >= MASTER && rank < GRANDMASTER)
-            return 20;
+        if (rank >= RANK.MASTER.getValue() && rank < RANK.GRANDMASTER.getValue())
+            return 20.0;
 
-        if (rank >= GRANDMASTER)
-            return 30;
+        if (rank >= RANK.GRANDMASTER.getValue())
+            return 30.0;
 
-        return 0;
+        return 0.0;
 
     }
 
-    public String calculateRoleByRank(Integer rank) {
+    public RANK calculateRoleByRank(Double rank) {
 
-        if (rank >= BRONZE && rank < SILVER)
-            return "Bronze";
+        if (rank < RANK.SILVER.getValue())
+            return RANK.BRONZE;
 
-        if (rank >= SILVER && rank < GOLD)
-            return "Silver";
+        if (rank >= RANK.SILVER.getValue() && rank < RANK.GOLD.getValue())
+            return RANK.SILVER;
 
-        if (rank >= GOLD && rank < PLATINUM)
-            return "Gold";
+        if (rank >= RANK.GOLD.getValue() && rank < RANK.PLATINUM.getValue())
+            return RANK.GOLD;
 
-        if (rank >= PLATINUM && rank < DIAMOND)
-            return "Platinum";
+        if (rank >= RANK.PLATINUM.getValue() && rank < RANK.DIAMOND.getValue())
+            return RANK.PLATINUM;
 
-        if (rank >= DIAMOND && rank < MASTER)
-            return "Diamond";
+        if (rank >= RANK.DIAMOND.getValue() && rank < RANK.MASTER.getValue())
+            return RANK.DIAMOND;
 
-        if (rank >= MASTER && rank < GRANDMASTER)
-            return "Master";
+        if (rank >= RANK.MASTER.getValue() && rank < RANK.GRANDMASTER.getValue())
+            return RANK.MASTER;
 
-        if (rank >= GRANDMASTER)
-            return "GrandMaster";
+        if (rank >= RANK.GRANDMASTER.getValue())
+            return RANK.GRANDMASTER;
 
-        return "";
+        return null;
 
     }
 
