@@ -228,7 +228,11 @@ public class MessageListener extends ListenerAdapter {
             if (isPrivate)
                 event.getPrivateChannel().sendMessage(rankMessage).queue();
             else
-                event.getChannel().sendMessage(rankMessage).queue();
+                event.getChannel().sendMessage(rankMessage).queue(sentMessage -> {
+                    CompletableFuture.delayedExecutor(10, TimeUnit.SECONDS).execute(() -> {
+                        sentMessage.delete().queue();
+                    });
+                });
 
         });
 

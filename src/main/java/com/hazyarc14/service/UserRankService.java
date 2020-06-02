@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +51,7 @@ public class UserRankService {
 
     }
 
-    public UserRank calculateUserRank(UserRank userRank) {
+    public UserRank calculateUserRank(Guild guild, Member member, UserRank userRank) {
 
         Integer currentRank = userRank.getRank();
         Timestamp joinedTm = userRank.getJoinedChannelTm();
@@ -58,10 +59,7 @@ public class UserRankService {
 
         // need to see how long they were in the channel and update rank
         Long minutesInChannel = TimeUnit.MINUTES.convert(leftTm.getTime() - joinedTm.getTime(), TimeUnit.MILLISECONDS);
-        log.info("minutesInChannel: " + minutesInChannel);
-
         Integer pointsToAdd = Math.floorDiv(minutesInChannel.intValue(), minsPerPointEarned);
-        log.info("pointsToAdd: " + pointsToAdd);
 
         Integer updatedRank = currentRank + pointsToAdd;
         if (updatedRank > MAXRANK)
@@ -97,7 +95,7 @@ public class UserRankService {
         List<UserRank> userRankList = userRanksRepository.findAll();
         userRankList.forEach(userRank -> {
 
-            Member member = null;
+            Member member;
             try {
                 member = guild.retrieveMemberById(userRank.getUserId()).complete();
             } catch (ErrorResponseException e) {
