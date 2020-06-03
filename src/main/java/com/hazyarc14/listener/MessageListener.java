@@ -99,25 +99,27 @@ public class MessageListener extends ListenerAdapter {
 
             userRankService.updateAllUserRoles(guild);
 
-        } else if (commandList[0].equalsIgnoreCase("!rank")) {
-
-            if (!isPrivate) {
-                message.delete().queue();
-            }
-
-            Long targetUserId = 0L;
-
-            if (commandList.length > 1) {
-                if (commandList[1].matches("^<@!\\d*>")) {
-                    targetUserId = Long.valueOf(commandList[1].substring(3, commandList[1].length() - 1));
-                }
-            } else {
-                targetUserId = message.getAuthor().getIdLong();
-            }
-
-            sendRankMessage(event, isPrivate, targetUserId);
-
-        } else if (commandList[0].equalsIgnoreCase("!rankAll")) {
+        } else
+//            if (commandList[0].equalsIgnoreCase("!rank")) {
+//
+//            if (!isPrivate) {
+//                message.delete().queue();
+//            }
+//
+//            Long targetUserId = 0L;
+//
+//            if (commandList.length > 1) {
+//                if (commandList[1].matches("^<@!\\d*>")) {
+//                    targetUserId = Long.valueOf(commandList[1].substring(3, commandList[1].length() - 1));
+//                }
+//            } else {
+//                targetUserId = message.getAuthor().getIdLong();
+//            }
+//
+//            sendRankMessage(event, isPrivate, targetUserId);
+//
+//        } else
+            if (commandList[0].equalsIgnoreCase("!rankAll")) {
 
             if (!isPrivate) {
                 message.delete().queue();
