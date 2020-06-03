@@ -22,17 +22,17 @@ public class UserRank {
     @Column(name = "joined_channel_tm")
     private Timestamp joinedChannelTm;
 
-    @Column(name = "left_channel_tm")
-    private Timestamp leftChannelTm;
+    @Column(name = "active")
+    private Boolean active;
 
     public UserRank() { }
 
-    public UserRank(Long userId, String userName, Double rank, Timestamp joinedChannelTm, Timestamp leftChannelTm) {
+    public UserRank(Long userId, String userName, Double rank, Timestamp joinedChannelTm, Boolean active) {
         this.userId = userId;
         this.userName = userName;
         this.rank = rank;
         this.joinedChannelTm = joinedChannelTm;
-        this.leftChannelTm = leftChannelTm;
+        this.active = active;
     }
 
     public UserRank(UserRank user) {
@@ -40,7 +40,7 @@ public class UserRank {
         this.userName = user.userName;
         this.rank = user.rank;
         this.joinedChannelTm = user.joinedChannelTm;
-        this.leftChannelTm = user.leftChannelTm;
+        this.active = user.active;
     }
 
     public Long getUserId() {
@@ -71,11 +71,11 @@ public class UserRank {
         this.joinedChannelTm = joinedChannelTm;
     }
 
-    public Timestamp getLeftChannelTm() {
-        return this.leftChannelTm;
+    public Boolean getActive() {
+        return this.active;
     }
-    public void setLeftChannelTm(Timestamp leftChannelTm) {
-        this.leftChannelTm = leftChannelTm;
+    public void setActive(Boolean active) {
+        this.active = active;
     }
 
 }

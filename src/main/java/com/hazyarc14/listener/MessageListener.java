@@ -86,6 +86,7 @@ public class MessageListener extends ListenerAdapter {
 
             if (!isPrivate) {
                 message.delete().queue();
+                if (!event.getChannel().getName().equals("bot-suggestions")) return;
             }
 
             sendHelpMessage(event, isPrivate);
@@ -222,11 +223,16 @@ public class MessageListener extends ListenerAdapter {
 
     private void sendRankMessage(MessageReceivedEvent event, Boolean isPrivate, Long targetUserId) {
 
+        Guild guild = event.getGuild();
+
         userRanksRepository.findById(targetUserId).ifPresent(userRank -> {
 
             Member targetMember = event.getGuild().getMemberById(targetUserId);
 
-            RANK currentUserRank = userRankService.calculateRoleByRank(userRank.getRank());
+            userRank.setActive(true);
+            UserRank updatedUserRank = userRankService.calculateUserRank(guild, targetMember, userRank);
+
+            RANK currentUserRank = userRankService.calculateRoleByRank(updatedUserRank.getRank());
             List<Role> roles = event.getGuild().getRolesByName(currentUserRank.getRoleName(), false);
 
             if (!roles.isEmpty()) {

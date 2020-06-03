@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 public class UserRankService {
@@ -50,20 +49,27 @@ public class UserRankService {
     public UserRank calculateUserRank(Guild guild, Member member, UserRank userRank) {
 
         Double currentRank = userRank.getRank();
-        Timestamp joinedTm = userRank.getJoinedChannelTm();
-        Timestamp leftTm = userRank.getLeftChannelTm();
 
-        // need to see how long they were in the channel and update rank
-        Long minutesInChannel = TimeUnit.MINUTES.convert(leftTm.getTime() - joinedTm.getTime(), TimeUnit.MILLISECONDS);
-        AtomicReference<Double> pointsToAdd = new AtomicReference<>(Math.floor(minutesInChannel.doubleValue() / minsPerPointEarned));
+        Timestamp joinedTm = userRank.getJoinedChannelTm();
+        Timestamp requestTmstp = new Timestamp(System.currentTimeMillis());
+
+        Long minutesInChannel = TimeUnit.MINUTES.convert(requestTmstp.getTime() - joinedTm.getTime(), TimeUnit.MILLISECONDS);
+        Double pointsToAdd = Math.floor(minutesInChannel.doubleValue() / minsPerPointEarned);
+        Double remainder = Math.abs(minutesInChannel.doubleValue() - pointsToAdd * minsPerPointEarned);
+
+        if (userRank.getActive()) {
+            Long remainderMilliseconds = TimeUnit.MILLISECONDS.convert(remainder.longValue(), TimeUnit.MINUTES);
+            Timestamp newJoinedTm = new Timestamp(requestTmstp.getTime() - remainderMilliseconds);
+            userRank.setJoinedChannelTm(newJoinedTm);
+        }
 
         List<Member> serverBoosters = guild.getBoosters();
-        serverBoosters.forEach(booster -> {
-            if (member.getIdLong() == booster.getIdLong())
-                pointsToAdd.updateAndGet(v -> v * serverBoosterBonus);
-        });
+        for (Member serverBooster: serverBoosters) {
+            if (serverBooster.getIdLong() == userRank.getUserId())
+                pointsToAdd *= serverBoosterBonus;
+        }
 
-        Double updatedRank = currentRank + pointsToAdd.get();
+        Double updatedRank = currentRank + pointsToAdd;
         if (updatedRank > MAXRANK)
             updatedRank = MAXRANK;
         if (updatedRank < MINRANK)
@@ -72,6 +78,7 @@ public class UserRankService {
         userRank.setRank(updatedRank);
 
         userRanksRepository.save(userRank);
+        updateRolesByUser(guild, member, userRank);
 
         return userRank;
 
@@ -143,11 +150,11 @@ public class UserRankService {
         userRankList.forEach(userRank -> {
 
             Double currentRank = userRank.getRank();
-            Timestamp leftTm = userRank.getLeftChannelTm();
+            Timestamp joinedTm = userRank.getJoinedChannelTm();
 
-            if (leftTm != null) {
+            if (joinedTm != null && !userRank.getActive()) {
 
-                Long temp = TimeUnit.DAYS.convert(currentTm.getTime() - leftTm.getTime(), TimeUnit.MILLISECONDS);
+                Long temp = TimeUnit.DAYS.convert(currentTm.getTime() - joinedTm.getTime(), TimeUnit.MILLISECONDS);
                 Integer daySinceChannelJoined = temp.intValue();
 
                 if (daySinceChannelJoined > 7) {

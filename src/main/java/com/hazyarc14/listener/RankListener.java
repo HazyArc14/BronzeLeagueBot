@@ -20,8 +20,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Stream;
 
 @Service
 public class RankListener extends ListenerAdapter {
@@ -76,7 +74,7 @@ public class RankListener extends ListenerAdapter {
                     userRank.ifPresent(user -> {
 
                         user.setJoinedChannelTm(userJoinedTmstp);
-                        user.setLeftChannelTm(null);
+                        user.setActive(true);
                         userRanksRepository.save(user);
 
                     });
@@ -90,7 +88,7 @@ public class RankListener extends ListenerAdapter {
                 userRank.ifPresent(user -> {
 
                     user.setJoinedChannelTm(userJoinedTmstp);
-                    user.setLeftChannelTm(null);
+                    user.setActive(true);
                     userRanksRepository.save(user);
 
                 });
@@ -128,9 +126,8 @@ public class RankListener extends ListenerAdapter {
                     Optional<UserRank> userRank = userRanksRepository.findById(member.getIdLong());
                     userRank.ifPresent(user -> {
 
-                        user.setLeftChannelTm(userLeaveTmstp);
-                        user = userRankService.calculateUserRank(guild, member, user);
-                        userRankService.updateRolesByUser(guild, member, user);
+                        user.setActive(false);
+                        userRankService.calculateUserRank(guild, member, user);
 
                     });
 
@@ -140,9 +137,8 @@ public class RankListener extends ListenerAdapter {
                 Optional<UserRank> userRank = userRanksRepository.findById(eventMember.getIdLong());
                 userRank.ifPresent(user -> {
 
-                    user.setLeftChannelTm(userLeaveTmstp);
-                    user = userRankService.calculateUserRank(guild, eventMember, user);
-                    userRankService.updateRolesByUser(guild, eventMember, user);
+                    user.setActive(false);
+                    userRankService.calculateUserRank(guild, eventMember, user);
 
                 });
 
@@ -152,9 +148,8 @@ public class RankListener extends ListenerAdapter {
                 Optional<UserRank> userRank = userRanksRepository.findById(eventMember.getIdLong());
                 userRank.ifPresent(user -> {
 
-                    user.setLeftChannelTm(userLeaveTmstp);
-                    user = userRankService.calculateUserRank(guild, eventMember, user);
-                    userRankService.updateRolesByUser(guild, eventMember, user);
+                    user.setActive(false);
+                    userRankService.calculateUserRank(guild, eventMember, user);
 
                 });
 
@@ -173,23 +168,16 @@ public class RankListener extends ListenerAdapter {
         if (eventMember.getUser().isBot()) return;
         Timestamp userMoveTmstp = new Timestamp(System.currentTimeMillis());
 
-        AtomicReference<Boolean> userRankProgressing = new AtomicReference<>(false);
         Optional<UserRank> eventMemberUserRank = userRanksRepository.findById(eventMember.getIdLong());
-
-        eventMemberUserRank.ifPresent(user -> {
-            if (user.getLeftChannelTm() == null)
-                userRankProgressing.set(true);
-        });
 
         // If moved to AFK channel
         if (event.getChannelJoined() == guild.getAfkChannel()) {
 
-            if (userRankProgressing.get())
+            if (eventMemberUserRank.get().getActive())
                 eventMemberUserRank.ifPresent(user -> {
 
-                    user.setLeftChannelTm(userMoveTmstp);
-                    user = userRankService.calculateUserRank(guild, eventMember, user);
-                    userRankService.updateRolesByUser(guild, eventMember, user);
+                    user.setActive(false);
+                    userRankService.calculateUserRank(guild, eventMember, user);
 
                 });
 
@@ -215,9 +203,8 @@ public class RankListener extends ListenerAdapter {
                     Optional<UserRank> userRank = userRanksRepository.findById(member.getIdLong());
                     userRank.ifPresent(user -> {
 
-                        user.setLeftChannelTm(userMoveTmstp);
-                        user = userRankService.calculateUserRank(guild, member, user);
-                        userRankService.updateRolesByUser(guild, member, user);
+                        user.setActive(false);
+                        userRankService.calculateUserRank(guild, member, user);
 
                     });
 
@@ -241,13 +228,12 @@ public class RankListener extends ListenerAdapter {
 
             if (memberListWithoutBots.size() == 1) {
 
-                if (userRankProgressing.get()) {
+                if (eventMemberUserRank.get().getActive()) {
 
                     eventMemberUserRank.ifPresent(user -> {
 
-                        user.setLeftChannelTm(userMoveTmstp);
-                        user = userRankService.calculateUserRank(guild, eventMember, user);
-                        userRankService.updateRolesByUser(guild, eventMember, user);
+                        user.setActive(false);
+                        userRankService.calculateUserRank(guild, eventMember, user);
 
                     });
 
@@ -258,7 +244,7 @@ public class RankListener extends ListenerAdapter {
                 //start counting for both individuals
                 memberListWithoutBots.forEach(member -> {
 
-                    if (userRankProgressing.get()) {
+                    if (eventMemberUserRank.get().getActive()) {
 
                         if (member.getIdLong() != eventMember.getIdLong()) {
 
@@ -266,7 +252,7 @@ public class RankListener extends ListenerAdapter {
                             userRank.ifPresent(user -> {
 
                                 user.setJoinedChannelTm(userMoveTmstp);
-                                user.setLeftChannelTm(null);
+                                user.setActive(true);
                                 userRanksRepository.save(user);
 
                             });
@@ -279,7 +265,7 @@ public class RankListener extends ListenerAdapter {
                         userRank.ifPresent(user -> {
 
                             user.setJoinedChannelTm(userMoveTmstp);
-                            user.setLeftChannelTm(null);
+                            user.setActive(true);
                             userRanksRepository.save(user);
 
                         });
@@ -294,7 +280,7 @@ public class RankListener extends ListenerAdapter {
                 eventMemberUserRank.ifPresent(user -> {
 
                     user.setJoinedChannelTm(userMoveTmstp);
-                    user.setLeftChannelTm(null);
+                    user.setActive(true);
                     userRanksRepository.save(user);
 
                 });
