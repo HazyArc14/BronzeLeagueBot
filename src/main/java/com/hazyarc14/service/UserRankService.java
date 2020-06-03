@@ -28,7 +28,7 @@ public class UserRankService {
     public static final Double MAXRANK = 2200.0;
 
     public static final Double minsPerPointEarned = 10.0;
-    public static final Double serverBoosterBonus = 1.5;
+    public static final Double serverBoosterBonus = 1.25;
 
     private static final List<String> guildRoleNames = Arrays.asList("Bronze", "Silver", "Gold", "Platinum", "Diamond", "Master", "GrandMaster");
 
