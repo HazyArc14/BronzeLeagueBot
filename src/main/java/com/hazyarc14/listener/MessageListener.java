@@ -120,6 +120,14 @@ public class MessageListener extends ListenerAdapter {
 
             sendRankAllMessage(event, isPrivate);
 
+        } else if (commandList[0].equalsIgnoreCase("!roleInfo")) {
+
+            if (!isPrivate) {
+                message.delete().queue();
+            }
+
+            sendRoleInfoMessage(event, isPrivate);
+
         } else if (commandList[0].startsWith(";") && commandList[0].endsWith(";")) {
 
             if (!isPrivate) {
@@ -187,7 +195,8 @@ public class MessageListener extends ListenerAdapter {
 
         basicCommands += "!help\n" +
                 "!rank or !rank @<user> ex: !rank @HazyArc14\n" +
-                "!rankAll\n";
+                "!rankAll\n" +
+                "!roleInfo\n";
 
         voiceCommands += "!play <YouTube Link>\n" +
                 "!skip\n";
@@ -269,6 +278,44 @@ public class MessageListener extends ListenerAdapter {
             event.getPrivateChannel().sendMessage(rankAllMessage).queue();
         else
             event.getChannel().sendMessage(rankAllMessage).queue();
+
+    }
+
+    private void sendRoleInfoMessage(MessageReceivedEvent event, Boolean isPrivate) {
+
+        String roleInfoMessage = "```\n" +
+                "What is all this role business?\n" +
+                " - This server has 7 roles and they are Bronze, Silver, Gold, Platinum, Diamond, Master, & GrandMaster\n" +
+                "\n" +
+                "How do I get these roles?\n" +
+                " - Simple, just be in the voice channel to get points.\n" +
+                "\n" +
+                "How many points do I get?\n" +
+                " - 1 point every 10 minutes\n" +
+                "\n" +
+                "Can I just AFK?\n" +
+                " - Nope. There has to be 2 or more people in the channel.\n" +
+                "\n" +
+                "Does the bot count as a person?\n" +
+                " - Nope. We fixed that ;)\n" +
+                "\n" +
+                "How many points do I need to get to the next role?\n" +
+                " - Bronze = 0\n" +
+                " - Silver = 50\n" +
+                " - Gold = 200\n" +
+                " - Platinum = 500\n" +
+                " - Diamond = 800\n" +
+                " - Master = 1200\n" +
+                " - GrandMaster = 2000\n" +
+                "\n" +
+                "Anything else I should know?\n" +
+                " - Yeah, there is actually role decay as well. Which starts after 7 days of not joining a channel and each role has different decay values. You can also never decay out of Silver.\n" +
+                "```";
+
+        if (isPrivate)
+            event.getPrivateChannel().sendMessage(roleInfoMessage).queue();
+        else
+            event.getChannel().sendMessage(roleInfoMessage).queue();
 
     }
 
