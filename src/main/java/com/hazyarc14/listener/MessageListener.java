@@ -64,7 +64,6 @@ public class MessageListener extends ListenerAdapter {
 
         if (event.getAuthor().isBot()) return;
 
-        Guild guild = event.getGuild();
         Message message = event.getMessage();
         String content = message.getContentRaw();
         String[] commandList = message.getContentRaw().split(" ");
@@ -93,11 +92,7 @@ public class MessageListener extends ListenerAdapter {
 
         } else if (commandList[0].equalsIgnoreCase("!roleRebalance")) {
 
-            if (!isPrivate) {
-                message.delete().queue();
-            }
-
-            userRankService.updateAllUserRoles(guild);
+            userRankService.updateAllUserRoles(event.getGuild());
 
         } else if (commandList[0].equalsIgnoreCase("!rank")) {
 
@@ -135,10 +130,6 @@ public class MessageListener extends ListenerAdapter {
             sendCommand(event, isPrivate, command);
 
         } else if (commandList[0].startsWith("!")) {
-
-            if (!isPrivate) {
-                message.delete().queue();
-            }
 
             if (!voiceChannelId.equalsIgnoreCase("")) {
                 try {
