@@ -183,6 +183,8 @@ public class MessageListener extends ListenerAdapter {
 
             }
 
+            message.delete().queue();
+
         }
 
     }
