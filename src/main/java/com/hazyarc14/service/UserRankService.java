@@ -142,7 +142,7 @@ public class UserRankService {
 
     public void updateAllUserRanks(JDA jda) {
 
-        Guild guild = jda.getGuildsByName("Bronze League!", true).get(0);
+        Guild guild = jda.getGuildById(93106003628806144L);
 
         List<UserRank> userRankList = userRanksRepository.findAll();
 
@@ -157,7 +157,7 @@ public class UserRankService {
 
     public void applyDecayToUserRanks(JDA jda) {
 
-        Guild guild = jda.getGuildsByName("Bronze League!", true).get(0);
+        Guild guild = jda.getGuildById(93106003628806144L);
 
         List<UserRank> userRankList = userRanksRepository.findAll();
         Timestamp currentTm = new Timestamp(System.currentTimeMillis());
