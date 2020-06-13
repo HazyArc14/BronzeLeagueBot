@@ -90,6 +90,11 @@ public class MessageListener extends ListenerAdapter {
 
             sendHelpMessage(event, isPrivate);
 
+        } else if (commandList[0].equalsIgnoreCase("!guildid")) {
+
+            message.delete().queue();
+            event.getChannel().sendMessage(event.getGuild().getIdLong().toString()).queue();
+
         } else if (commandList[0].equalsIgnoreCase("!roleRebalance")) {
 
             userRankService.updateAllUserRoles(event.getGuild());
