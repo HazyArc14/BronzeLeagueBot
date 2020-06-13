@@ -49,4 +49,9 @@ public class BronzeLeagueBotApplication {
 		userRankService.applyDecayToUserRanks(this.jda);
 	}
 
+	@Scheduled(fixedDelay = 60000)
+	public void updateUserRanks() {
+		userRankService.updateAllUserRanks(this.jda);
+	}
+
 }

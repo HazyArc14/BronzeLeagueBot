@@ -140,9 +140,24 @@ public class UserRankService {
 
     }
 
+    public void updateAllUserRanks(JDA jda) {
+
+        Guild guild = jda.getGuildsByName("Bronze League!", true).get(0);
+
+        List<UserRank> userRankList = userRanksRepository.findAll();
+
+        userRankList.forEach(userRank -> {
+            if (userRank.getActive()) {
+                Member member = guild.getMemberById(userRank.getUserId());
+                calculateUserRank(guild, member, userRank);
+            }
+        });
+
+    }
+
     public void applyDecayToUserRanks(JDA jda) {
 
-        Guild guild = jda.getGuildsByName("Bronze League", true).get(0);
+        Guild guild = jda.getGuildsByName("Bronze League!", true).get(0);
 
         List<UserRank> userRankList = userRanksRepository.findAll();
         Timestamp currentTm = new Timestamp(System.currentTimeMillis());
