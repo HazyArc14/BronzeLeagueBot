@@ -232,8 +232,8 @@ public class MessageListener extends ListenerAdapter {
             Member targetMember = event.getGuild().getMemberById(targetUserId);
             UserRank updatedUserRank = userRank;
 
-            if (userRank.getActive())
-                updatedUserRank = userRankService.calculateUserRank(guild, targetMember, userRank);
+//            if (userRank.getActive())
+//                updatedUserRank = userRankService.calculateUserRank(guild, targetMember, userRank);
 
             RANK currentUserRank = userRankService.calculateRoleByRank(updatedUserRank.getRank());
             List<Role> roles = event.getGuild().getRolesByName(currentUserRank.getRoleName(), false);
