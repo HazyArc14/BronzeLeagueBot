@@ -93,7 +93,7 @@ public class MessageListener extends ListenerAdapter {
         } else if (commandList[0].equalsIgnoreCase("!guildid")) {
 
             message.delete().queue();
-            event.getChannel().sendMessage(event.getGuild().getIdLong().toString()).queue();
+            event.getChannel().sendMessage(event.getGuild().getId()).queue();
 
         } else if (commandList[0].equalsIgnoreCase("!roleRebalance")) {
 
