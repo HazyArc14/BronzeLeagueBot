@@ -3,20 +3,24 @@ package com.hazyarc14.service;
 import com.hazyarc14.enums.RANK;
 import com.hazyarc14.model.UserRank;
 import com.hazyarc14.repository.UserRanksRepository;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.awt.*;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -143,13 +147,40 @@ public class UserRankService {
     public void updateAllUserRanks(JDA jda) {
 
         Guild guild = jda.getGuildById(93106003628806144L);
+        TextChannel defaultChannel = guild.getDefaultChannel();
 
         List<UserRank> userRankList = userRanksRepository.findAll();
 
         userRankList.forEach(userRank -> {
             if (userRank.getActive()) {
+
                 Member member = guild.getMemberById(userRank.getUserId());
-                calculateUserRank(guild, member, userRank);
+                UserRank updatedUserRank = calculateUserRank(guild, member, userRank);
+
+                RANK originalRank = calculateRoleByRank(userRank.getRank());
+                RANK updatedRank = calculateRoleByRank(updatedUserRank.getRank());
+
+                if (originalRank.getRoleName() != updatedRank.getRoleName()) {
+
+                    List<Role> roles = guild.getRolesByName(updatedRank.getRoleName(), false);
+
+                    if (!roles.isEmpty()) {
+
+                        Color rankColor = roles.get(0).getColor();
+
+                        EmbedBuilder eb = new EmbedBuilder();
+
+                        eb.setColor(rankColor);
+                        eb.setTitle("Leveled up to " + updatedRank.getRoleName() + "!");
+                        eb.setDescription("Rank " + userRank.getRank() + " of " + updatedRank.next().getValue());
+                        eb.setAuthor(userRank.getUserName(), null, member.getUser().getAvatarUrl());
+
+                        defaultChannel.sendMessage("Level Up!").embed(eb.build()).queue();
+
+                    }
+
+                }
+
             }
         });
 
