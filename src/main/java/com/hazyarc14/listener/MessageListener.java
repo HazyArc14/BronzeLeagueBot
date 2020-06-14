@@ -305,12 +305,12 @@ public class MessageListener extends ListenerAdapter {
                 "\n" +
                 "How many points do I need to get to the next role?\n" +
                 " - Bronze = 0\n" +
-                " - Silver = 50\n" +
+                " - Silver = 100\n" +
                 " - Gold = 200\n" +
                 " - Platinum = 500\n" +
-                " - Diamond = 800\n" +
-                " - Master = 1200\n" +
-                " - GrandMaster = 2000\n" +
+                " - Diamond = 1250\n" +
+                " - Master = 2000\n" +
+                " - GrandMaster = 3500\n" +
                 "\n" +
                 "Anything else I should know?\n" +
                 " - Yeah, there is actually role decay as well. Which starts after 7 days of not joining a channel and each role has different decay values. You can also never decay out of Silver.\n" +
