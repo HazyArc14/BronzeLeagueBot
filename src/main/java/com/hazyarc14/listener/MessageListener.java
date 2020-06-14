@@ -92,6 +92,8 @@ public class MessageListener extends ListenerAdapter {
 
         } else if (commandList[0].equalsIgnoreCase("!roleRebalance")) {
 
+            message.delete().queue();
+
             userRankService.updateAllUserRoles(event.getGuild());
 
         } else if (commandList[0].equalsIgnoreCase("!rank")) {
