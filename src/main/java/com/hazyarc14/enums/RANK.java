@@ -3,12 +3,12 @@ package com.hazyarc14.enums;
 public enum RANK {
 
     BRONZE("Bronze", 0.0),
-    SILVER("Silver",50.0),
-    GOLD("Gold",200.0),
+    SILVER("Silver",100.0),
+    GOLD("Gold",250.0),
     PLATINUM("Platinum",500.0),
-    DIAMOND("Diamond",800.0),
-    MASTER("Master",1200.0),
-    GRANDMASTER("GrandMaster",2000.0);
+    DIAMOND("Diamond",1250.0),
+    MASTER("Master",2000.0),
+    GRANDMASTER("GrandMaster",3500.0);
 
     private String roleName;
     private double value;
