@@ -20,7 +20,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -32,7 +31,7 @@ public class UserRankService {
     public static final Double MAXRANK = 2200.0;
 
     public static final Double minsPerPointEarned = 10.0;
-    public static final Double serverBoosterBonus = 1.25;
+    public static final Double serverBoosterBonus = 1.10;
 
     private static final List<String> guildRoleNames = Arrays.asList("Bronze", "Silver", "Gold", "Platinum", "Diamond", "Master", "GrandMaster");
 
