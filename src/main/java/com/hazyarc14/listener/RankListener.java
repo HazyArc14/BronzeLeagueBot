@@ -82,6 +82,8 @@ public class RankListener extends ListenerAdapter {
                         user.setActive(true);
 
                         UserLog userLog = new UserLog();
+                        userLog.setUserId(user.getUserId());
+                        userLog.setUserName(user.getUserName());
                         userLog.setMethodCall("onGuildVoiceJoin - 1");
                         userLog.setOldRank(user.getRank());
                         userLog.setUpdateTm(new Timestamp(System.currentTimeMillis()));
@@ -104,6 +106,8 @@ public class RankListener extends ListenerAdapter {
                     user.setActive(true);
 
                     UserLog userLog = new UserLog();
+                    userLog.setUserId(user.getUserId());
+                    userLog.setUserName(user.getUserName());
                     userLog.setMethodCall("onGuildVoiceJoin - 1");
                     userLog.setOldRank(user.getRank());
                     userLog.setUpdateTm(new Timestamp(System.currentTimeMillis()));
@@ -149,6 +153,8 @@ public class RankListener extends ListenerAdapter {
                         user.setActive(false);
 
                         UserLog userLog = new UserLog();
+                        userLog.setUserId(user.getUserId());
+                        userLog.setUserName(user.getUserName());
                         userLog.setMethodCall("onGuildVoiceLeave - 1");
                         userLog.setOldRank(user.getRank());
                         userLog.setUpdateTm(new Timestamp(System.currentTimeMillis()));
@@ -167,6 +173,8 @@ public class RankListener extends ListenerAdapter {
                     user.setActive(false);
 
                     UserLog userLog = new UserLog();
+                    userLog.setUserId(user.getUserId());
+                    userLog.setUserName(user.getUserName());
                     userLog.setMethodCall("onGuildVoiceLeave - 2");
                     userLog.setOldRank(user.getRank());
                     userLog.setUpdateTm(new Timestamp(System.currentTimeMillis()));
@@ -185,6 +193,8 @@ public class RankListener extends ListenerAdapter {
                     user.setActive(false);
 
                     UserLog userLog = new UserLog();
+                    userLog.setUserId(user.getUserId());
+                    userLog.setUserName(user.getUserName());
                     userLog.setMethodCall("onGuildVoiceLeave - 3");
                     userLog.setOldRank(user.getRank());
                     userLog.setUpdateTm(new Timestamp(System.currentTimeMillis()));
@@ -220,6 +230,8 @@ public class RankListener extends ListenerAdapter {
                     user.setActive(false);
 
                     UserLog userLog = new UserLog();
+                    userLog.setUserId(user.getUserId());
+                    userLog.setUserName(user.getUserName());
                     userLog.setMethodCall("onGuildVoiceMove - 1");
                     userLog.setOldRank(user.getRank());
                     userLog.setUpdateTm(new Timestamp(System.currentTimeMillis()));
@@ -254,6 +266,8 @@ public class RankListener extends ListenerAdapter {
                         user.setActive(false);
 
                         UserLog userLog = new UserLog();
+                        userLog.setUserId(user.getUserId());
+                        userLog.setUserName(user.getUserName());
                         userLog.setMethodCall("onGuildVoiceMove - 2");
                         userLog.setOldRank(user.getRank());
                         userLog.setUpdateTm(new Timestamp(System.currentTimeMillis()));
@@ -290,6 +304,8 @@ public class RankListener extends ListenerAdapter {
                         user.setActive(false);
 
                         UserLog userLog = new UserLog();
+                        userLog.setUserId(user.getUserId());
+                        userLog.setUserName(user.getUserName());
                         userLog.setMethodCall("onGuildVoiceMove - 3");
                         userLog.setOldRank(user.getRank());
                         userLog.setUpdateTm(new Timestamp(System.currentTimeMillis()));
@@ -317,6 +333,8 @@ public class RankListener extends ListenerAdapter {
                                 user.setActive(true);
 
                                 UserLog userLog = new UserLog();
+                                userLog.setUserId(user.getUserId());
+                                userLog.setUserName(user.getUserName());
                                 userLog.setMethodCall("onGuildVoiceMove - 4");
                                 userLog.setOldRank(user.getRank());
                                 userLog.setUpdateTm(new Timestamp(System.currentTimeMillis()));
@@ -338,6 +356,8 @@ public class RankListener extends ListenerAdapter {
                             user.setActive(true);
 
                             UserLog userLog = new UserLog();
+                            userLog.setUserId(user.getUserId());
+                            userLog.setUserName(user.getUserName());
                             userLog.setMethodCall("onGuildVoiceMove - 5");
                             userLog.setOldRank(user.getRank());
                             userLog.setUpdateTm(new Timestamp(System.currentTimeMillis()));
@@ -361,6 +381,8 @@ public class RankListener extends ListenerAdapter {
                     user.setActive(true);
 
                     UserLog userLog = new UserLog();
+                    userLog.setUserId(user.getUserId());
+                    userLog.setUserName(user.getUserName());
                     userLog.setMethodCall("onGuildVoiceMove - 6");
                     userLog.setOldRank(user.getRank());
                     userLog.setUpdateTm(new Timestamp(System.currentTimeMillis()));

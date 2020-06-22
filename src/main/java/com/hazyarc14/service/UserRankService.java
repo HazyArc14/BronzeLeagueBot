@@ -161,6 +161,8 @@ public class UserRankService {
             if (userRank.getActive()) {
 
                 UserLog userLog = new UserLog();
+                userLog.setUserId(userRank.getUserId());
+                userLog.setUserName(userRank.getUserName());
                 userLog.setMethodCall("updateAllUserRanks - 1");
                 userLog.setOldRank(userRank.getRank());
                 userLog.setUpdateTm(new Timestamp(System.currentTimeMillis()));

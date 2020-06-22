@@ -10,7 +10,7 @@ import java.sql.Timestamp;
 @Table(name = "user_log")
 public class UserLog {
 
-    @Id
+    @Column(name = "user_id")
     private Long userId;
 
     @Column(name = "user_name")
@@ -33,8 +33,9 @@ public class UserLog {
 
     public UserLog() { }
 
-    public UserLog(Long userId, Double oldRank, Double newRank, String methodCall, Timestamp updateTm, Boolean active) {
+    public UserLog(Long userId, String userName, Double oldRank, Double newRank, String methodCall, Timestamp updateTm, Boolean active) {
         this.userId = userId;
+        this.userName = userName;
         this.oldRank = oldRank;
         this.newRank = newRank;
         this.methodCall = methodCall;
@@ -44,6 +45,7 @@ public class UserLog {
 
     public UserLog(UserLog user) {
         this.userId = user.userId;
+        this.userName = user.userName;
         this.oldRank = user.oldRank;
         this.newRank = user.newRank;
         this.methodCall = user.methodCall;
@@ -57,6 +59,9 @@ public class UserLog {
     public void setUserId(Long userId) {
         this.userId = userId;
     }
+
+    public String getUserName() { return this.userName; }
+    public void setUserName(String userName) { this.userName = userName; }
 
     public Double getOldRank() {
         return this.oldRank;
