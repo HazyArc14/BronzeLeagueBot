@@ -1,7 +1,9 @@
 package com.hazyarc14.service;
 
 import com.hazyarc14.enums.RANK;
+import com.hazyarc14.model.UserLog;
 import com.hazyarc14.model.UserRank;
+import com.hazyarc14.repository.UserLogRepository;
 import com.hazyarc14.repository.UserRanksRepository;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
@@ -38,6 +40,9 @@ public class UserRankService {
     @Autowired
     UserRanksRepository userRanksRepository;
 
+    @Autowired
+    UserLogRepository userLogRepository;
+
     public void createUserRank(Member member) {
 
         UserRank userRank = new UserRank();
@@ -49,7 +54,7 @@ public class UserRankService {
 
     }
 
-    public UserRank calculateUserRank(Guild guild, Member member, UserRank userRank) {
+    public UserRank calculateUserRank(Guild guild, Member member, UserRank userRank, UserLog userLog) {
 
         Double currentRank = userRank.getRank();
 
@@ -79,8 +84,10 @@ public class UserRankService {
             updatedRank = MINRANK;
 
         userRank.setRank(updatedRank);
+        userLog.setNewRank(userRank.getRank());
 
         userRanksRepository.save(userRank);
+        userLogRepository.save(userLog);
         updateRolesByUser(guild, member, userRank);
 
         return userRank;
@@ -153,13 +160,19 @@ public class UserRankService {
         userRankList.forEach(userRank -> {
             if (userRank.getActive()) {
 
+                UserLog userLog = new UserLog();
+                userLog.setMethodCall("updateAllUserRanks - 1");
+                userLog.setOldRank(userRank.getRank());
+                userLog.setUpdateTm(new Timestamp(System.currentTimeMillis()));
+                userLog.setActive(userRank.getActive());
+
                 Member member = guild.getMemberById(userRank.getUserId());
-                UserRank updatedUserRank = calculateUserRank(guild, member, userRank);
+                UserRank updatedUserRank = calculateUserRank(guild, member, userRank, userLog);
 
                 RANK originalRank = calculateRoleByRank(userRank.getRank());
                 RANK updatedRank = calculateRoleByRank(updatedUserRank.getRank());
 
-                if (originalRank.getRoleName() != updatedRank.getRoleName()) {
+                if (!originalRank.getRoleName().equalsIgnoreCase(updatedRank.getRoleName())) {
 
                     List<Role> roles = guild.getRolesByName(updatedRank.getRoleName(), false);
 

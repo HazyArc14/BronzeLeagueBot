@@ -1,6 +1,8 @@
 package com.hazyarc14.listener;
 
+import com.hazyarc14.model.UserLog;
 import com.hazyarc14.model.UserRank;
+import com.hazyarc14.repository.UserLogRepository;
 import com.hazyarc14.repository.UserRanksRepository;
 import com.hazyarc14.service.UserRankService;
 import net.dv8tion.jda.api.entities.Guild;
@@ -28,6 +30,9 @@ public class RankListener extends ListenerAdapter {
 
     @Autowired
     UserRanksRepository userRanksRepository;
+
+    @Autowired
+    UserLogRepository userLogRepository;
 
     @Autowired
     UserRankService userRankService;
@@ -75,7 +80,15 @@ public class RankListener extends ListenerAdapter {
 
                         user.setJoinedChannelTm(userJoinedTmstp);
                         user.setActive(true);
+
+                        UserLog userLog = new UserLog();
+                        userLog.setMethodCall("onGuildVoiceJoin - 1");
+                        userLog.setOldRank(user.getRank());
+                        userLog.setUpdateTm(new Timestamp(System.currentTimeMillis()));
+                        userLog.setActive(user.getActive());
+
                         userRanksRepository.save(user);
+                        userLogRepository.save(userLog);
 
                     });
 
@@ -89,7 +102,15 @@ public class RankListener extends ListenerAdapter {
 
                     user.setJoinedChannelTm(userJoinedTmstp);
                     user.setActive(true);
+
+                    UserLog userLog = new UserLog();
+                    userLog.setMethodCall("onGuildVoiceJoin - 1");
+                    userLog.setOldRank(user.getRank());
+                    userLog.setUpdateTm(new Timestamp(System.currentTimeMillis()));
+                    userLog.setActive(user.getActive());
+
                     userRanksRepository.save(user);
+                    userLogRepository.save(userLog);
 
                 });
 
@@ -107,7 +128,6 @@ public class RankListener extends ListenerAdapter {
 
         if (eventMember.getUser().isBot()) return;
         if (event.getChannelLeft() == guild.getAfkChannel()) return;
-        Timestamp userLeaveTmstp = new Timestamp(System.currentTimeMillis());
 
         Optional<List<Member>> membersInChannel = Optional.ofNullable(event.getChannelLeft().getMembers());
         membersInChannel.ifPresent(members -> {
@@ -116,7 +136,7 @@ public class RankListener extends ListenerAdapter {
             for (Member member : members) {
                 if (!member.getUser().isBot())
                     memberListWithoutBots.add(member);
-            };
+            }
 
             if (memberListWithoutBots.size() == 1) {
 
@@ -127,7 +147,14 @@ public class RankListener extends ListenerAdapter {
                     userRank.ifPresent(user -> {
 
                         user.setActive(false);
-                        userRankService.calculateUserRank(guild, member, user);
+
+                        UserLog userLog = new UserLog();
+                        userLog.setMethodCall("onGuildVoiceLeave - 1");
+                        userLog.setOldRank(user.getRank());
+                        userLog.setUpdateTm(new Timestamp(System.currentTimeMillis()));
+                        userLog.setActive(user.getActive());
+
+                        userRankService.calculateUserRank(guild, member, user, userLog);
 
                     });
 
@@ -138,7 +165,14 @@ public class RankListener extends ListenerAdapter {
                 userRank.ifPresent(user -> {
 
                     user.setActive(false);
-                    userRankService.calculateUserRank(guild, eventMember, user);
+
+                    UserLog userLog = new UserLog();
+                    userLog.setMethodCall("onGuildVoiceLeave - 2");
+                    userLog.setOldRank(user.getRank());
+                    userLog.setUpdateTm(new Timestamp(System.currentTimeMillis()));
+                    userLog.setActive(user.getActive());
+
+                    userRankService.calculateUserRank(guild, eventMember, user, userLog);
 
                 });
 
@@ -149,7 +183,14 @@ public class RankListener extends ListenerAdapter {
                 userRank.ifPresent(user -> {
 
                     user.setActive(false);
-                    userRankService.calculateUserRank(guild, eventMember, user);
+
+                    UserLog userLog = new UserLog();
+                    userLog.setMethodCall("onGuildVoiceLeave - 3");
+                    userLog.setOldRank(user.getRank());
+                    userLog.setUpdateTm(new Timestamp(System.currentTimeMillis()));
+                    userLog.setActive(user.getActive());
+
+                    userRankService.calculateUserRank(guild, eventMember, user, userLog);
 
                 });
 
@@ -177,7 +218,14 @@ public class RankListener extends ListenerAdapter {
                 eventMemberUserRank.ifPresent(user -> {
 
                     user.setActive(false);
-                    userRankService.calculateUserRank(guild, eventMember, user);
+
+                    UserLog userLog = new UserLog();
+                    userLog.setMethodCall("onGuildVoiceMove - 1");
+                    userLog.setOldRank(user.getRank());
+                    userLog.setUpdateTm(new Timestamp(System.currentTimeMillis()));
+                    userLog.setActive(user.getActive());
+
+                    userRankService.calculateUserRank(guild, eventMember, user, userLog);
 
                 });
 
@@ -204,7 +252,14 @@ public class RankListener extends ListenerAdapter {
                     userRank.ifPresent(user -> {
 
                         user.setActive(false);
-                        userRankService.calculateUserRank(guild, member, user);
+
+                        UserLog userLog = new UserLog();
+                        userLog.setMethodCall("onGuildVoiceMove - 2");
+                        userLog.setOldRank(user.getRank());
+                        userLog.setUpdateTm(new Timestamp(System.currentTimeMillis()));
+                        userLog.setActive(user.getActive());
+
+                        userRankService.calculateUserRank(guild, member, user, userLog);
 
                     });
 
@@ -233,7 +288,14 @@ public class RankListener extends ListenerAdapter {
                     eventMemberUserRank.ifPresent(user -> {
 
                         user.setActive(false);
-                        userRankService.calculateUserRank(guild, eventMember, user);
+
+                        UserLog userLog = new UserLog();
+                        userLog.setMethodCall("onGuildVoiceMove - 3");
+                        userLog.setOldRank(user.getRank());
+                        userLog.setUpdateTm(new Timestamp(System.currentTimeMillis()));
+                        userLog.setActive(user.getActive());
+
+                        userRankService.calculateUserRank(guild, eventMember, user, userLog);
 
                     });
 
@@ -253,7 +315,15 @@ public class RankListener extends ListenerAdapter {
 
                                 user.setJoinedChannelTm(userMoveTmstp);
                                 user.setActive(true);
+
+                                UserLog userLog = new UserLog();
+                                userLog.setMethodCall("onGuildVoiceMove - 4");
+                                userLog.setOldRank(user.getRank());
+                                userLog.setUpdateTm(new Timestamp(System.currentTimeMillis()));
+                                userLog.setActive(user.getActive());
+
                                 userRanksRepository.save(user);
+                                userLogRepository.save(userLog);
 
                             });
 
@@ -266,7 +336,15 @@ public class RankListener extends ListenerAdapter {
 
                             user.setJoinedChannelTm(userMoveTmstp);
                             user.setActive(true);
+
+                            UserLog userLog = new UserLog();
+                            userLog.setMethodCall("onGuildVoiceMove - 5");
+                            userLog.setOldRank(user.getRank());
+                            userLog.setUpdateTm(new Timestamp(System.currentTimeMillis()));
+                            userLog.setActive(user.getActive());
+
                             userRanksRepository.save(user);
+                            userLogRepository.save(userLog);
 
                         });
 
@@ -281,7 +359,15 @@ public class RankListener extends ListenerAdapter {
 
                     user.setJoinedChannelTm(userMoveTmstp);
                     user.setActive(true);
+
+                    UserLog userLog = new UserLog();
+                    userLog.setMethodCall("onGuildVoiceMove - 6");
+                    userLog.setOldRank(user.getRank());
+                    userLog.setUpdateTm(new Timestamp(System.currentTimeMillis()));
+                    userLog.setActive(user.getActive());
+
                     userRanksRepository.save(user);
+                    userLogRepository.save(userLog);
 
                 });
 
