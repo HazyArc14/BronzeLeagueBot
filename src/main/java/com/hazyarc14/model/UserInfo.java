@@ -7,8 +7,8 @@ import javax.persistence.Table;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "user_ranks")
-public class UserRank {
+@Table(name = "user_info")
+public class UserInfo {
 
     @Id
     private Long userId;
@@ -25,9 +25,9 @@ public class UserRank {
     @Column(name = "active")
     private Boolean active;
 
-    public UserRank() { }
+    public UserInfo() { }
 
-    public UserRank(Long userId, String userName, Double rank, Timestamp joinedChannelTm, Boolean active) {
+    public UserInfo(Long userId, String userName, Double rank, Timestamp joinedChannelTm, Boolean active) {
         this.userId = userId;
         this.userName = userName;
         this.rank = rank;
@@ -35,7 +35,7 @@ public class UserRank {
         this.active = active;
     }
 
-    public UserRank(UserRank user) {
+    public UserInfo(UserInfo user) {
         this.userId = user.userId;
         this.userName = user.userName;
         this.rank = user.rank;

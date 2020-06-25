@@ -3,9 +3,9 @@ package com.hazyarc14.listener;
 import com.hazyarc14.audio.GuildMusicManager;
 import com.hazyarc14.enums.RANK;
 import com.hazyarc14.model.Command;
-import com.hazyarc14.model.UserRank;
+import com.hazyarc14.model.UserInfo;
 import com.hazyarc14.repository.CommandRepository;
-import com.hazyarc14.repository.UserRanksRepository;
+import com.hazyarc14.repository.UserInfoRepository;
 import com.hazyarc14.service.UserRankService;
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
@@ -43,7 +43,7 @@ public class MessageListener extends ListenerAdapter {
     public static final Logger log = LoggerFactory.getLogger(MessageListener.class);
 
     @Autowired
-    UserRanksRepository userRanksRepository;
+    UserInfoRepository userInfoRepository;
 
     @Autowired
     UserRankService userRankService;
@@ -168,7 +168,7 @@ public class MessageListener extends ListenerAdapter {
                 VoiceChannel finalVoiceChannel = voiceChannel;
                 commandRepository.findById(commandValue).ifPresent(command -> {
 
-                    if (command.getActive()) {
+                    if (command.getActive() && command.getCommandFileExtension().equalsIgnoreCase("mp3")) {
 
                         File commandFile = new File(command.getCommandName() + "." + command.getCommandFileExtension());
                         try {
@@ -229,15 +229,12 @@ public class MessageListener extends ListenerAdapter {
 
         Guild guild = event.getGuild();
 
-        userRanksRepository.findById(targetUserId).ifPresent(userRank -> {
+        userInfoRepository.findById(targetUserId).ifPresent(userRank -> {
 
             Member targetMember = event.getGuild().getMemberById(targetUserId);
-            UserRank updatedUserRank = userRank;
+            UserInfo updatedUserInfo = userRank;
 
-//            if (userRank.getActive())
-//                updatedUserRank = userRankService.calculateUserRank(guild, targetMember, userRank);
-
-            RANK currentUserRank = userRankService.calculateRoleByRank(updatedUserRank.getRank());
+            RANK currentUserRank = userRankService.calculateRoleByRank(updatedUserInfo.getRank());
             List<Role> roles = event.getGuild().getRolesByName(currentUserRank.getRoleName(), false);
 
             if (!roles.isEmpty()) {
@@ -270,10 +267,10 @@ public class MessageListener extends ListenerAdapter {
 
         String rankAllMessage = "```Current User Ranks:\n";
 
-        List<UserRank> userRankList = userRanksRepository.findAll(Sort.by(Sort.Direction.DESC, "rank"));
-        for (UserRank userRank: userRankList) {
+        List<UserInfo> userInfoList = userInfoRepository.findAll(Sort.by(Sort.Direction.DESC, "rank"));
+        for (UserInfo userInfo : userInfoList) {
 
-            rankAllMessage += userRank.getUserName() + " - " + userRank.getRank() + "\n";
+            rankAllMessage += userInfo.getUserName() + " - " + userInfo.getRank() + "\n";
 
         }
         rankAllMessage += "```";
@@ -326,7 +323,7 @@ public class MessageListener extends ListenerAdapter {
     private void sendCommand(MessageReceivedEvent event, Boolean isPrivate, String commandName) {
 
         commandRepository.findById(commandName).ifPresent(command -> {
-            if (command.getActive()) {
+            if (command.getActive() && !command.getCommandFileExtension().equalsIgnoreCase("mp3")) {
                 if (isPrivate)
                     event.getPrivateChannel().sendFile(command.getCommandFile(), command.getCommandName() + "." + command.getCommandFileExtension()).queue();
                 else

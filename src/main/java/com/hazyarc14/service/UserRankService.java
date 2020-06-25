@@ -1,10 +1,8 @@
 package com.hazyarc14.service;
 
 import com.hazyarc14.enums.RANK;
-import com.hazyarc14.model.UserLog;
-import com.hazyarc14.model.UserRank;
-import com.hazyarc14.repository.UserLogRepository;
-import com.hazyarc14.repository.UserRanksRepository;
+import com.hazyarc14.model.UserInfo;
+import com.hazyarc14.repository.UserInfoRepository;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
@@ -12,8 +10,6 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,8 +23,6 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class UserRankService {
 
-    public static final Logger log = LoggerFactory.getLogger(UserRankService.class);
-
     public static final Double MINRANK = 0.0;
     public static final Double MAXRANK = 2200.0;
 
@@ -38,42 +32,39 @@ public class UserRankService {
     private static final List<String> guildRoleNames = Arrays.asList("Bronze", "Silver", "Gold", "Platinum", "Diamond", "Master", "GrandMaster");
 
     @Autowired
-    UserRanksRepository userRanksRepository;
-
-    @Autowired
-    UserLogRepository userLogRepository;
+    UserInfoRepository userInfoRepository;
 
     public void createUserRank(Member member) {
 
-        UserRank userRank = new UserRank();
-        userRank.setUserId(member.getIdLong());
-        userRank.setUserName(member.getEffectiveName());
-        userRank.setRank(0.0);
+        UserInfo userInfo = new UserInfo();
+        userInfo.setUserId(member.getIdLong());
+        userInfo.setUserName(member.getEffectiveName());
+        userInfo.setRank(0.0);
 
-        userRanksRepository.save(userRank);
+        userInfoRepository.save(userInfo);
 
     }
 
-    public UserRank calculateUserRank(Guild guild, Member member, UserRank userRank, UserLog userLog) {
+    public UserInfo calculateUserRank(Guild guild, Member member, UserInfo userInfo) {
 
-        Double currentRank = userRank.getRank();
+        Double currentRank = userInfo.getRank();
 
-        Timestamp joinedTm = userRank.getJoinedChannelTm();
+        Timestamp joinedTm = userInfo.getJoinedChannelTm();
         Timestamp requestTmstp = new Timestamp(System.currentTimeMillis());
 
         Long minutesInChannel = TimeUnit.MINUTES.convert(requestTmstp.getTime() - joinedTm.getTime(), TimeUnit.MILLISECONDS);
         Double pointsToAdd = Math.floor(minutesInChannel.doubleValue() / minsPerPointEarned);
         Double remainder = Math.abs(minutesInChannel.doubleValue() - pointsToAdd * minsPerPointEarned);
 
-        if (userRank.getActive()) {
+        if (userInfo.getActive()) {
             Long remainderMilliseconds = TimeUnit.MILLISECONDS.convert(remainder.longValue(), TimeUnit.MINUTES);
             Timestamp newJoinedTm = new Timestamp(requestTmstp.getTime() - remainderMilliseconds);
-            userRank.setJoinedChannelTm(newJoinedTm);
+            userInfo.setJoinedChannelTm(newJoinedTm);
         }
 
         List<Member> serverBoosters = guild.getBoosters();
         for (Member serverBooster: serverBoosters) {
-            if (serverBooster.getIdLong() == userRank.getUserId())
+            if (serverBooster.getIdLong() == userInfo.getUserId())
                 pointsToAdd *= serverBoosterBonus;
         }
 
@@ -83,23 +74,21 @@ public class UserRankService {
         if (updatedRank < MINRANK)
             updatedRank = MINRANK;
 
-        userRank.setRank(updatedRank);
-        userLog.setNewRank(userRank.getRank());
+        userInfo.setRank(updatedRank);
 
-        userRanksRepository.save(userRank);
-        userLogRepository.save(userLog);
-        updateRolesByUser(guild, member, userRank);
+        userInfoRepository.save(userInfo);
+        updateRolesByUser(guild, member, userInfo);
 
-        return userRank;
+        return userInfo;
 
     }
 
-    public void updateRolesByUser(Guild guild, Member member, UserRank userRank) {
+    public void updateRolesByUser(Guild guild, Member member, UserInfo userInfo) {
 
         List<Role> memberRoles = member.getRoles();
         List<Role> newMemberRoles = new ArrayList<>();
 
-        RANK currentUserRank = calculateRoleByRank(userRank.getRank());
+        RANK currentUserRank = calculateRoleByRank(userInfo.getRank());
         List<Role> roles = guild.getRolesByName(currentUserRank.getRoleName(), false);
 
         if (!roles.isEmpty()) {
@@ -120,15 +109,15 @@ public class UserRankService {
 
     public void updateAllUserRoles(Guild guild) {
 
-        List<UserRank> userRankList = userRanksRepository.findAll();
-        userRankList.forEach(userRank -> {
+        List<UserInfo> userInfoList = userInfoRepository.findAll();
+        userInfoList.forEach(userRank -> {
 
             Member member;
             try {
                 member = guild.retrieveMemberById(userRank.getUserId()).complete();
             } catch (ErrorResponseException e) {
                 if (e.getErrorCode() == 10007)
-                    userRanksRepository.delete(userRank);
+                    userInfoRepository.delete(userRank);
                 return;
             }
 
@@ -155,24 +144,16 @@ public class UserRankService {
         Guild guild = jda.getGuildById(93106003628806144L);
         TextChannel defaultChannel = guild.getDefaultChannel();
 
-        List<UserRank> userRankList = userRanksRepository.findAll();
+        List<UserInfo> userInfoList = userInfoRepository.findAll();
 
-        userRankList.forEach(userRank -> {
+        userInfoList.forEach(userRank -> {
             if (userRank.getActive()) {
 
-                UserLog userLog = new UserLog();
-                userLog.setUserId(userRank.getUserId());
-                userLog.setUserName(userRank.getUserName());
-                userLog.setMethodCall("updateAllUserRanks - 1");
-                userLog.setOldRank(userRank.getRank());
-                userLog.setUpdateTm(new Timestamp(System.currentTimeMillis()));
-                userLog.setActive(userRank.getActive());
-
                 Member member = guild.getMemberById(userRank.getUserId());
-                UserRank updatedUserRank = calculateUserRank(guild, member, userRank, userLog);
+                UserInfo updatedUserInfo = calculateUserRank(guild, member, userRank);
 
                 RANK originalRank = calculateRoleByRank(userRank.getRank());
-                RANK updatedRank = calculateRoleByRank(updatedUserRank.getRank());
+                RANK updatedRank = calculateRoleByRank(updatedUserInfo.getRank());
 
                 if (!originalRank.getRoleName().equalsIgnoreCase(updatedRank.getRoleName())) {
 
@@ -204,10 +185,10 @@ public class UserRankService {
 
         Guild guild = jda.getGuildById(93106003628806144L);
 
-        List<UserRank> userRankList = userRanksRepository.findAll();
+        List<UserInfo> userInfoList = userInfoRepository.findAll();
         Timestamp currentTm = new Timestamp(System.currentTimeMillis());
 
-        userRankList.forEach(userRank -> {
+        userInfoList.forEach(userRank -> {
 
             Double currentRank = userRank.getRank();
             Timestamp joinedTm = userRank.getJoinedChannelTm();
@@ -222,7 +203,7 @@ public class UserRankService {
                     Double pointsToRemove = calculateDecayValue(currentRank);
 
                     userRank.setRank(currentRank - pointsToRemove);
-                    userRanksRepository.save(userRank);
+                    userInfoRepository.save(userRank);
 
                 }
 

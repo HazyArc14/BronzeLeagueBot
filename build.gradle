@@ -8,8 +8,8 @@ group = 'com.hazyarc14'
 version = '3.0.0'
 sourceCompatibility = '11'
 
-def jdaVersion = '4.1.1_156'
-def lavaPlayerVersion = '1.3.49'
+def jdaVersion = '4.1.1_165'
+def lavaPlayerVersion = '1.3.50'
 
 configurations {
 	compileOnly {
