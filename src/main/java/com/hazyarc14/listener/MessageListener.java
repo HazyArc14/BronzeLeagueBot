@@ -229,10 +229,10 @@ public class MessageListener extends ListenerAdapter {
 
         Guild guild = event.getGuild();
 
-        userInfoRepository.findById(targetUserId).ifPresent(userRank -> {
+        userInfoRepository.findById(targetUserId).ifPresent(userInfo -> {
 
             Member targetMember = event.getGuild().getMemberById(targetUserId);
-            UserInfo updatedUserInfo = userRank;
+            UserInfo updatedUserInfo = userInfo;
 
             RANK currentUserRank = userRankService.calculateRoleByRank(updatedUserInfo.getRank());
             List<Role> roles = event.getGuild().getRolesByName(currentUserRank.getRoleName(), false);
@@ -245,8 +245,8 @@ public class MessageListener extends ListenerAdapter {
 
                 eb.setColor(rankColor);
                 eb.setTitle("Current Role is " + currentUserRank.getRoleName() + ".");
-                eb.setDescription("Rank " + userRank.getRank() + " of " + currentUserRank.next().getValue());
-                eb.setAuthor(userRank.getUserName(), null, targetMember.getUser().getAvatarUrl());
+                eb.setDescription("Rank " + String.format("%.2f", userInfo.getRank()) + " of " + currentUserRank.next().getValue());
+                eb.setAuthor(userInfo.getUserName(), null, targetMember.getUser().getAvatarUrl());
 
                 if (isPrivate)
                     event.getPrivateChannel().sendMessage("Current Role & Rank").embed(eb.build()).queue();
@@ -270,7 +270,7 @@ public class MessageListener extends ListenerAdapter {
         List<UserInfo> userInfoList = userInfoRepository.findAll(Sort.by(Sort.Direction.DESC, "rank"));
         for (UserInfo userInfo : userInfoList) {
 
-            rankAllMessage += userInfo.getUserName() + " - " + userInfo.getRank() + "\n";
+            rankAllMessage += userInfo.getUserName() + " - " + String.format("%.2f", userInfo.getRank()) + "\n";
 
         }
         rankAllMessage += "```";
