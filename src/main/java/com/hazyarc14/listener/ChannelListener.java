@@ -105,21 +105,21 @@ public class ChannelListener extends ListenerAdapter {
             guild = joinEvent.getGuild();
             eventMember = joinEvent.getMember();
             newEvent.setType("joinEvent");
-            newEvent.setMessage("Joined " + joinEvent.getChannelJoined().getName());
+            newEvent.setMessage("Joined " + joinEvent.getChannelJoined().getId());
         }
         if (leaveEvent != null) {
 //            log.info("leaveEvent");
             guild = leaveEvent.getGuild();
             eventMember = leaveEvent.getMember();
             newEvent.setType("leaveEvent");
-            newEvent.setMessage("Left " + leaveEvent.getChannelLeft().getName());
+            newEvent.setMessage("Left " + leaveEvent.getChannelLeft().getId());
         }
         if (moveEvent != null) {
 //            log.info("moveEvent");
             guild = moveEvent.getGuild();
             eventMember = moveEvent.getMember();
             newEvent.setType("moveEvent");
-            newEvent.setMessage("Left " + moveEvent.getChannelLeft().getName() + " and Joined " + moveEvent.getChannelJoined().getName());
+            newEvent.setMessage("Left " + moveEvent.getChannelLeft().getId() + " and Joined " + moveEvent.getChannelJoined().getId());
         }
 
         newEvent.setUserName(eventMember.getEffectiveName());
