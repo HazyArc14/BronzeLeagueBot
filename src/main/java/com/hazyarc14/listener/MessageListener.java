@@ -324,10 +324,33 @@ public class MessageListener extends ListenerAdapter {
 
         commandRepository.findById(commandName).ifPresent(command -> {
             if (command.getActive() && !command.getCommandFileExtension().equalsIgnoreCase("mp3")) {
-                if (isPrivate)
+                if (isPrivate) {
                     event.getPrivateChannel().sendFile(command.getCommandFile(), command.getCommandName() + "." + command.getCommandFileExtension()).queue();
-                else
-                    event.getChannel().sendFile(command.getCommandFile(), command.getCommandName() + "." + command.getCommandFileExtension()).queue();
+                } else {
+
+                    User author = event.getAuthor();
+
+                    userInfoRepository.findById(author.getIdLong()).ifPresent(userInfo -> {
+
+                        RANK currentUserRank = userRankService.calculateRoleByRank(userInfo.getRank());
+                        List<Role> roles = event.getGuild().getRolesByName(currentUserRank.getRoleName(), false);
+
+                        if (!roles.isEmpty()) {
+
+                            Color rankColor = roles.get(0).getColor();
+
+                            EmbedBuilder eb = new EmbedBuilder();
+
+                            eb.setColor(rankColor);
+                            eb.setAuthor(author.getName(), null, author.getAvatarUrl());
+                            eb.setImage("attachment://" + command.getCommandName() + "." + command.getCommandFileExtension());
+
+                            event.getChannel().sendFile(command.getCommandFile(), command.getCommandName() + "." + command.getCommandFileExtension()).embed(eb.build()).queue();
+
+                        }
+
+                    });
+                }
             }
         });
 
