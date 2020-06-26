@@ -540,7 +540,7 @@ public class MessageListener extends ListenerAdapter {
 
                 }
 
-                if (noVotesCount >= 2 || yesVotesCount >= 2) {
+                if (noVotesCount >= 3 || yesVotesCount >= 3) {
 
                     Boolean approved = false;
                     if (yesVotesCount > noVotesCount)
