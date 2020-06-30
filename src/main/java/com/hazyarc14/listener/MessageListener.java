@@ -85,7 +85,7 @@ public class MessageListener extends ListenerAdapter {
 
             if (!isPrivate) {
                 message.delete().queue();
-                if (!event.getChannel().getName().equals("bot-suggestions")) return;
+                if (!event.getChannel().getName().equals("bot-commands")) return;
             }
 
             sendHelpMessage(event, isPrivate);
