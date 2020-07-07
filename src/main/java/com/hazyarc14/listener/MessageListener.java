@@ -270,7 +270,8 @@ public class MessageListener extends ListenerAdapter {
         List<UserInfo> userInfoList = userInfoRepository.findAll(Sort.by(Sort.Direction.DESC, "rank"));
         for (UserInfo userInfo : userInfoList) {
 
-            rankAllMessage += userInfo.getUserName() + " - " + String.format("%.2f", userInfo.getRank()) + "\n";
+            if (userInfo.getRank() != 0.0)
+                rankAllMessage += userInfo.getUserName() + " - " + String.format("%.2f", userInfo.getRank()) + "\n";
 
         }
         rankAllMessage += "```";
