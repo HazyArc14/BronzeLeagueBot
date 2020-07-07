@@ -40,6 +40,7 @@ public class UserRankService {
         userInfo.setUserId(member.getIdLong());
         userInfo.setUserName(member.getEffectiveName());
         userInfo.setRank(0.0);
+        userInfo.setActive(false);
 
         userInfoRepository.save(userInfo);
 
