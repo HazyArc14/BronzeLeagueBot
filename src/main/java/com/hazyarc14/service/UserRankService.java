@@ -146,38 +146,18 @@ public class UserRankService {
 
         List<UserInfo> userInfoList = userInfoRepository.findAll();
 
-        userInfoList.forEach(userRank -> {
-            if (userRank.getActive()) {
+        if (!userInfoList.isEmpty()) {
 
-                Member member = guild.getMemberById(userRank.getUserId());
-                UserInfo updatedUserInfo = calculateUserRank(guild, member, userRank);
+            userInfoList.forEach(userRank -> {
+                if (userRank.getActive()) {
 
-                RANK originalRank = calculateRoleByRank(userRank.getRank());
-                RANK updatedRank = calculateRoleByRank(updatedUserInfo.getRank());
-
-                if (!originalRank.getRoleName().equalsIgnoreCase(updatedRank.getRoleName())) {
-
-                    List<Role> roles = guild.getRolesByName(updatedRank.getRoleName(), false);
-
-                    if (!roles.isEmpty()) {
-
-                        Color rankColor = roles.get(0).getColor();
-
-                        EmbedBuilder eb = new EmbedBuilder();
-
-                        eb.setColor(rankColor);
-                        eb.setTitle("Leveled up to " + updatedRank.getRoleName() + "!");
-                        eb.setDescription("Rank " + userRank.getRank() + " of " + updatedRank.next().getValue());
-                        eb.setAuthor(userRank.getUserName(), null, member.getUser().getAvatarUrl());
-
-                        defaultChannel.sendMessage("Level Up!").embed(eb.build()).queue();
-
-                    }
+                    Member member = guild.getMemberById(userRank.getUserId());
+                    UserInfo updatedUserInfo = calculateUserRank(guild, member, userRank);
 
                 }
+            });
 
-            }
-        });
+        }
 
     }
 
