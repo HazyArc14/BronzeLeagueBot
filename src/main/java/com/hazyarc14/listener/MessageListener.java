@@ -293,7 +293,7 @@ public class MessageListener extends ListenerAdapter {
                 " - Simple, just be in the voice channel to get points.\n" +
                 "\n" +
                 "How many points do I get?\n" +
-                " - 1 point every 10 minutes.\n " +
+                " - 1 point every 10 minutes.\n" +
                 " - Server Boosters get a 1.10x multiplier.\n" +
                 " - If there are 6-7 people in a single channel, everyone in that channel gets a 1.50x multiplier.\n" +
                 " - If there are 8+ people in a single channel, everyone in that channel gets a 2.00x multiplier.\n" +
