@@ -69,6 +69,16 @@ public class UserRankService {
                 pointsToAdd *= serverBoosterBonus;
         }
 
+        if (member.getVoiceState().inVoiceChannel()) {
+            Integer membersInChannelCount = member.getVoiceState().getChannel().getMembers().size();
+
+            if (membersInChannelCount >= 6 && membersInChannelCount < 8) {
+                pointsToAdd *= 1.5;
+            } else if (membersInChannelCount >= 8) {
+                pointsToAdd *= 2.0;
+            }
+        }
+
         Double updatedRank = currentRank + pointsToAdd;
         if (updatedRank > MAXRANK)
             updatedRank = MAXRANK;
