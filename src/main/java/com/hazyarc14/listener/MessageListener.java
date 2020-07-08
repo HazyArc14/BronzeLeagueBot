@@ -297,7 +297,7 @@ public class MessageListener extends ListenerAdapter {
                 " - Server Boosters get a 1.10x multiplier.\n" +
                 " - If there are 6-7 people in a single channel, everyone in that channel gets a 1.50x multiplier.\n" +
                 " - If there are 8+ people in a single channel, everyone in that channel gets a 2.00x multiplier.\n" +
-                " **Server Booster and Channel Member count do stack.**\n" +
+                " **Server Booster and Channel Members multiplier do stack.**\n" +
                 "\n" +
                 "Can I just AFK?\n" +
                 " - Nope. There has to be 2 or more people in the channel.\n" +
