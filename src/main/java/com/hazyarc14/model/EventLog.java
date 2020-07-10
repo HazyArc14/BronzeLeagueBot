@@ -26,6 +26,9 @@ public class EventLog {
     @Column(name = "message")
     private String message;
 
+    @Column(name = "rank")
+    private Double rank;
+
     public EventLog() { }
 
     public EventLog(EventLog event) {
@@ -35,6 +38,7 @@ public class EventLog {
         this.userId = event.userId;
         this.tm = event.tm;
         this.message = event.message;
+        this.rank = event.rank;
     }
 
     public Long getOid() {
@@ -77,6 +81,13 @@ public class EventLog {
     }
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public Double getRank() {
+        return this.rank;
+    }
+    public void setRank(Double rank) {
+        this.rank = rank;
     }
 
 }

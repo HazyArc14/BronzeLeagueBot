@@ -59,6 +59,7 @@ public class ChannelListener extends ListenerAdapter {
         newEvent.setUserId(joinedMember.getIdLong());
         newEvent.setType("guildJoinEvent");
         newEvent.setMessage(joinedMember.getEffectiveName() + " Joined the Guild");
+        newEvent.setRank(0.0);
         eventLogRepository.save(newEvent);
 
     }
@@ -124,6 +125,12 @@ public class ChannelListener extends ListenerAdapter {
 
         newEvent.setUserName(eventMember.getEffectiveName());
         newEvent.setUserId(eventMember.getIdLong());
+
+        Optional<UserInfo> eventMemberUserInfoOptional = userInfoRepository.findById(eventMember.getIdLong());
+        if (eventMemberUserInfoOptional.isPresent()) {
+            UserInfo eventMemberUserInfo = eventMemberUserInfoOptional.get();
+            newEvent.setRank(eventMemberUserInfo.getRank());
+        }
 
         eventLogRepository.save(newEvent);
 
