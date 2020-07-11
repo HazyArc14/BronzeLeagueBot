@@ -102,44 +102,28 @@ public class ChannelListener extends ListenerAdapter {
         Member eventMember = null;
 
         if (joinEvent != null) {
-//            log.info("joinEvent");
             guild = joinEvent.getGuild();
             eventMember = joinEvent.getMember();
             newEvent.setType("joinEvent");
             newEvent.setMessage("Joined " + joinEvent.getChannelJoined().getId());
         }
         if (leaveEvent != null) {
-//            log.info("leaveEvent");
             guild = leaveEvent.getGuild();
             eventMember = leaveEvent.getMember();
             newEvent.setType("leaveEvent");
             newEvent.setMessage("Left " + leaveEvent.getChannelLeft().getId());
         }
         if (moveEvent != null) {
-//            log.info("moveEvent");
             guild = moveEvent.getGuild();
             eventMember = moveEvent.getMember();
             newEvent.setType("moveEvent");
             newEvent.setMessage("Left " + moveEvent.getChannelLeft().getId() + " and Joined " + moveEvent.getChannelJoined().getId());
         }
 
-        newEvent.setUserName(eventMember.getEffectiveName());
-        newEvent.setUserId(eventMember.getIdLong());
-
-        Optional<UserInfo> eventMemberUserInfoOptional = userInfoRepository.findById(eventMember.getIdLong());
-        if (eventMemberUserInfoOptional.isPresent()) {
-            UserInfo eventMemberUserInfo = eventMemberUserInfoOptional.get();
-            newEvent.setRank(eventMemberUserInfo.getRank());
-        }
-
-        eventLogRepository.save(newEvent);
-
         List<VoiceChannel> voiceChannels = guild.getVoiceChannels();
         VoiceChannel afkChannel = guild.getAfkChannel();
 
         if (!afkChannel.getMembers().isEmpty()) {
-
-//            log.info("checking AFK channel");
 
             afkChannel.getMembers().forEach(member -> {
 
@@ -152,8 +136,6 @@ public class ChannelListener extends ListenerAdapter {
                     UserInfo userInfo = userInfoOptional.get();
                     userInfo.setActive(false);
                     userInfoRepository.save(userInfo);
-
-//                    log.info("updating AFK channel user");
 
                 }
 
@@ -172,8 +154,6 @@ public class ChannelListener extends ListenerAdapter {
                     memberListWithoutBots.add(member);
             }
 
-//            log.info(voiceChannel.getName() + " memberListWithoutBots size: " + memberListWithoutBots.size());
-
             if (memberListWithoutBots.size() >= 2) {
 
                 memberListWithoutBots.forEach(member -> {
@@ -190,8 +170,6 @@ public class ChannelListener extends ListenerAdapter {
                             userInfo.setActive(true);
                             userInfo.setJoinedChannelTm(eventTimestamp);
                             userInfoRepository.save(userInfo);
-
-//                            log.info("setting channel user to active");
 
                         }
 
@@ -215,8 +193,6 @@ public class ChannelListener extends ListenerAdapter {
 
                     }
 
-//                    log.info("setting channel user to inactive");
-
                 });
 
             }
@@ -229,14 +205,26 @@ public class ChannelListener extends ListenerAdapter {
             if (userInfoOptional.isPresent()) {
 
                 UserInfo userInfo = userInfoOptional.get();
-                userInfo.setActive(false);
-                userRankService.calculateUserRank(guild, eventMember, userInfo);
+
+                if (userInfo.getActive()) {
+                    userInfo.setActive(false);
+                    userRankService.calculateUserRank(guild, eventMember, userInfo);
+                }
 
             }
 
-//            log.info("setting channel user to inactive");
-
         }
+
+        newEvent.setUserName(eventMember.getEffectiveName());
+        newEvent.setUserId(eventMember.getIdLong());
+
+        Optional<UserInfo> eventMemberUserInfoOptional = userInfoRepository.findById(eventMember.getIdLong());
+        if (eventMemberUserInfoOptional.isPresent()) {
+            UserInfo eventMemberUserInfo = eventMemberUserInfoOptional.get();
+            newEvent.setRank(eventMemberUserInfo.getRank());
+        }
+
+        eventLogRepository.save(newEvent);
 
     }
 
