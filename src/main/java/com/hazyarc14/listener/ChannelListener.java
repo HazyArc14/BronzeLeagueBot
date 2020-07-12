@@ -10,6 +10,7 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.VoiceChannel;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceDeafenEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent;
@@ -69,7 +70,7 @@ public class ChannelListener extends ListenerAdapter {
 
         if (joinEvent.getMember().getUser().isBot()) return;
 
-        updateUserStatus(joinEvent, null, null);
+        updateUserStatus(joinEvent, null, null, null);
 
     }
 
@@ -78,7 +79,7 @@ public class ChannelListener extends ListenerAdapter {
 
         if (leaveEvent.getMember().getUser().isBot()) return;
 
-        updateUserStatus(null, leaveEvent, null);
+        updateUserStatus(null, leaveEvent, null, null);
 
     }
 
@@ -87,11 +88,20 @@ public class ChannelListener extends ListenerAdapter {
 
         if (moveEvent.getMember().getUser().isBot()) return;
 
-        updateUserStatus(null, null, moveEvent);
+        updateUserStatus(null, null, moveEvent, null);
 
     }
 
-    public void updateUserStatus(@Nullable GuildVoiceJoinEvent joinEvent, @Nullable GuildVoiceLeaveEvent leaveEvent, @Nullable GuildVoiceMoveEvent moveEvent) {
+    @Override
+    public void onGuildVoiceDeafen(GuildVoiceDeafenEvent deafenEvent) {
+
+        if (deafenEvent.getMember().getUser().isBot()) return;
+
+        updateUserStatus(null, null, null, deafenEvent);
+
+    }
+
+    public void updateUserStatus(@Nullable GuildVoiceJoinEvent joinEvent, @Nullable GuildVoiceLeaveEvent leaveEvent, @Nullable GuildVoiceMoveEvent moveEvent, @Nullable GuildVoiceDeafenEvent deafenEvent) {
 
         Timestamp eventTimestamp = new Timestamp(System.currentTimeMillis());
 
@@ -119,47 +129,59 @@ public class ChannelListener extends ListenerAdapter {
             newEvent.setType("moveEvent");
             newEvent.setMessage("Left " + moveEvent.getChannelLeft().getId() + " and Joined " + moveEvent.getChannelJoined().getId());
         }
+        if (deafenEvent != null) {
+            guild = deafenEvent.getGuild();
+            eventMember = deafenEvent.getMember();
+            if (deafenEvent.isDeafened()) {
+                newEvent.setType("deafenEvent");
+                newEvent.setMessage("User deafened");
+            } else if (!deafenEvent.isDeafened()) {
+                newEvent.setType("deafenEvent");
+                newEvent.setMessage("User un-deafened");
+            }
+        }
 
         List<VoiceChannel> voiceChannels = guild.getVoiceChannels();
         VoiceChannel afkChannel = guild.getAfkChannel();
 
-        if (!afkChannel.getMembers().isEmpty()) {
+        voiceChannels.forEach(voiceChannel -> {
 
-            afkChannel.getMembers().forEach(member -> {
+            if (voiceChannel.getIdLong() == afkChannel.getIdLong()) {
 
-                if (member.getUser().isBot())
-                    return;
+                if (!afkChannel.getMembers().isEmpty()) {
 
-                Optional<UserInfo> userInfoOptional = userInfoRepository.findById(member.getIdLong());
-                if (userInfoOptional.isPresent()) {
+                    afkChannel.getMembers().forEach(member -> {
 
-                    UserInfo userInfo = userInfoOptional.get();
-                    userInfo.setActive(false);
-                    userInfoRepository.save(userInfo);
+                        if (member.getUser().isBot())
+                            return;
+
+                        Optional<UserInfo> userInfoOptional = userInfoRepository.findById(member.getIdLong());
+                        if (userInfoOptional.isPresent()) {
+
+                            UserInfo userInfo = userInfoOptional.get();
+                            userInfo.setActive(false);
+                            userInfoRepository.save(userInfo);
+
+                        }
+
+                    });
 
                 }
 
-            });
-
-        }
-
-        voiceChannels.forEach(voiceChannel -> {
-
-            if (voiceChannel.getIdLong() == afkChannel.getIdLong())
-                return;
-
-            List<Member> memberListWithoutBots = new ArrayList<>();
-            for (Member member : voiceChannel.getMembers()) {
-                if (!member.getUser().isBot())
-                    memberListWithoutBots.add(member);
             }
 
-            if (memberListWithoutBots.size() >= 2) {
+            List<Member> eligibleMembers = new ArrayList<>();
+            List<Member> inEligibleMembers = new ArrayList<>();
+            for (Member member : voiceChannel.getMembers()) {
+                if (!member.getUser().isBot() && !member.getVoiceState().isSelfDeafened())
+                    eligibleMembers.add(member);
+                if (!member.getUser().isBot() && member.getVoiceState().isSelfDeafened())
+                    inEligibleMembers.add(member);
+            }
 
-                memberListWithoutBots.forEach(member -> {
+            if (eligibleMembers.size() >= 2) {
 
-                    if (member.getUser().isBot())
-                        return;
+                eligibleMembers.forEach(member -> {
 
                     Optional<UserInfo> userInfoOptional = userInfoRepository.findById(member.getIdLong());
                     if (userInfoOptional.isPresent()) {
@@ -167,8 +189,8 @@ public class ChannelListener extends ListenerAdapter {
                         UserInfo userInfo = userInfoOptional.get();
                         if (userInfo.getActive() == false) {
 
-                            userInfo.setActive(true);
                             userInfo.setJoinedChannelTm(eventTimestamp);
+                            userInfo.setActive(true);
                             userInfoRepository.save(userInfo);
 
                         }
@@ -177,12 +199,26 @@ public class ChannelListener extends ListenerAdapter {
 
                 });
 
-            } else if (memberListWithoutBots.size() == 1) {
+            } else if (eligibleMembers.size() == 1) {
 
-                memberListWithoutBots.forEach(member -> {
+                eligibleMembers.forEach(member -> {
 
-                    if (member.getUser().isBot())
-                        return;
+                    Optional<UserInfo> userInfoOptional = userInfoRepository.findById(member.getIdLong());
+                    if (userInfoOptional.isPresent()) {
+
+                        UserInfo userInfo = userInfoOptional.get();
+                        userInfo.setActive(false);
+                        userInfoRepository.save(userInfo);
+
+                    }
+
+                });
+
+            }
+
+            if (!inEligibleMembers.isEmpty()) {
+
+                inEligibleMembers.forEach(member -> {
 
                     Optional<UserInfo> userInfoOptional = userInfoRepository.findById(member.getIdLong());
                     if (userInfoOptional.isPresent()) {
