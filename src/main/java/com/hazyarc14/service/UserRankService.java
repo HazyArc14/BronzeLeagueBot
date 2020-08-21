@@ -25,7 +25,7 @@ public class UserRankService {
     public static final Logger log = LoggerFactory.getLogger(UserRankService.class);
 
     public static final Double MINRANK = 0.0;
-    public static final Double MAXRANK = 2200.0;
+    public static final Double MAXRANK = 9999.0;
 
     public static final Double minsPerPointEarned = 10.0;
     public static final Double serverBoosterBonus = 1.10;
