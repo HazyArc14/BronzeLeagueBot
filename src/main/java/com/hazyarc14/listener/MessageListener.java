@@ -265,16 +265,48 @@ public class MessageListener extends ListenerAdapter {
 
     private void sendRankAllMessage(MessageReceivedEvent event, Boolean isPrivate) {
 
-        String rankAllMessage = "```Current User Ranks:\n";
+        String grandMasterUsers = RANK.GRANDMASTER.getRoleName() + " (" + RANK.GRANDMASTER.getValue() + ")\n";
+        String masterUsers = RANK.MASTER.getRoleName() + " (" + RANK.MASTER.getValue() + ")\n";;
+        String diamondUsers = RANK.DIAMOND.getRoleName() + " (" + RANK.DIAMOND.getValue() + ")\n";;
+        String platinumUsers = RANK.PLATINUM.getRoleName() + " (" + RANK.PLATINUM.getValue() + ")\n";;
+        String goldUsers = RANK.GOLD.getRoleName() + " (" + RANK.GOLD.getValue() + ")\n";;
+        String silverUsers = RANK.SILVER.getRoleName() + " (" + RANK.SILVER.getValue() + ")\n";;
+        String bronzeUsers = RANK.BRONZE.getRoleName() + " (" + RANK.BRONZE.getValue() + ")\n";;
 
         List<UserInfo> userInfoList = userInfoRepository.findAll(Sort.by(Sort.Direction.DESC, "rank"));
         for (UserInfo userInfo : userInfoList) {
 
-            if (userInfo.getRank() != 0.0)
-                rankAllMessage += userInfo.getUserName() + " - " + String.format("%.2f", userInfo.getRank()) + "\n";
+            Double userRank = userInfo.getRank();
+            if (userRank != 0.0) {
+
+                if (userRank >= RANK.GRANDMASTER.getValue())
+                    grandMasterUsers += userInfo.getUserName() + " - " + String.format("%.2f", userRank) + "\n";
+                else if (userRank >= RANK.MASTER.getValue())
+                    masterUsers += userInfo.getUserName() + " - " + String.format("%.2f", userRank) + "\n";
+                else if (userRank >= RANK.DIAMOND.getValue())
+                    diamondUsers += userInfo.getUserName() + " - " + String.format("%.2f", userRank) + "\n";
+                else if (userRank >= RANK.PLATINUM.getValue())
+                    platinumUsers += userInfo.getUserName() + " - " + String.format("%.2f", userRank) + "\n";
+                else if (userRank >= RANK.GOLD.getValue())
+                    goldUsers += userInfo.getUserName() + " - " + String.format("%.2f", userRank) + "\n";
+                else if (userRank >= RANK.SILVER.getValue())
+                    silverUsers += userInfo.getUserName() + " - " + String.format("%.2f", userRank) + "\n";
+                else if (userRank >= RANK.BRONZE.getValue())
+                    bronzeUsers += userInfo.getUserName() + " - " + String.format("%.2f", userRank) + "\n";
+
+            }
 
         }
-        rankAllMessage += "```";
+
+        String rankAllMessage = "```"
+                + grandMasterUsers + "\n\n"
+                + masterUsers + "\n\n"
+                + diamondUsers + "\n\n"
+                + platinumUsers + "\n\n"
+                + goldUsers + "\n\n"
+                + silverUsers + "\n\n"
+                + bronzeUsers + "\n\n"
+                + "```";
 
         if (isPrivate)
             event.getPrivateChannel().sendMessage(rankAllMessage).queue();
