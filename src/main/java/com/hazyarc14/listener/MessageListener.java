@@ -265,13 +265,13 @@ public class MessageListener extends ListenerAdapter {
 
     private void sendRankAllMessage(MessageReceivedEvent event, Boolean isPrivate) {
 
-        String grandMasterUsers = RANK.GRANDMASTER.getRoleName() + " (" + RANK.GRANDMASTER.getValue() + ")\n";
-        String masterUsers = RANK.MASTER.getRoleName() + " (" + RANK.MASTER.getValue() + ")\n";;
-        String diamondUsers = RANK.DIAMOND.getRoleName() + " (" + RANK.DIAMOND.getValue() + ")\n";;
-        String platinumUsers = RANK.PLATINUM.getRoleName() + " (" + RANK.PLATINUM.getValue() + ")\n";;
-        String goldUsers = RANK.GOLD.getRoleName() + " (" + RANK.GOLD.getValue() + ")\n";;
-        String silverUsers = RANK.SILVER.getRoleName() + " (" + RANK.SILVER.getValue() + ")\n";;
-        String bronzeUsers = RANK.BRONZE.getRoleName() + " (" + RANK.BRONZE.getValue() + ")\n";;
+        String grandMasterUsers = RANK.GRANDMASTER.getRoleName() + " (" + RANK.GRANDMASTER.getValue() + "):\n";
+        String masterUsers = RANK.MASTER.getRoleName() + " (" + RANK.MASTER.getValue() + "):\n";;
+        String diamondUsers = RANK.DIAMOND.getRoleName() + " (" + RANK.DIAMOND.getValue() + "):\n";;
+        String platinumUsers = RANK.PLATINUM.getRoleName() + " (" + RANK.PLATINUM.getValue() + "):\n";;
+        String goldUsers = RANK.GOLD.getRoleName() + " (" + RANK.GOLD.getValue() + "):\n";;
+        String silverUsers = RANK.SILVER.getRoleName() + " (" + RANK.SILVER.getValue() + "):\n";;
+        String bronzeUsers = RANK.BRONZE.getRoleName() + " (" + RANK.BRONZE.getValue() + "):\n";;
 
         List<UserInfo> userInfoList = userInfoRepository.findAll(Sort.by(Sort.Direction.DESC, "rank"));
         for (UserInfo userInfo : userInfoList) {
@@ -299,13 +299,13 @@ public class MessageListener extends ListenerAdapter {
         }
 
         String rankAllMessage = "```"
-                + grandMasterUsers + "\n\n"
-                + masterUsers + "\n\n"
-                + diamondUsers + "\n\n"
-                + platinumUsers + "\n\n"
-                + goldUsers + "\n\n"
-                + silverUsers + "\n\n"
-                + bronzeUsers + "\n\n"
+                + grandMasterUsers + "\n"
+                + masterUsers + "\n"
+                + diamondUsers + "\n"
+                + platinumUsers + "\n"
+                + goldUsers + "\n"
+                + silverUsers + "\n"
+                + bronzeUsers + "\n"
                 + "```";
 
         if (isPrivate)
