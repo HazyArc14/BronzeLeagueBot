@@ -32,8 +32,10 @@ import org.springframework.stereotype.Service;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -54,7 +56,7 @@ public class MessageListener extends ListenerAdapter {
     @Autowired
     SteamAPIService steamAPIService;
 
-    @Value("${bronze.league.bot.dev.mode")
+    @Value("${bronze.league.bot.dev.mode}")
     private Boolean devMode;
 
     private final AudioPlayerManager playerManager;
@@ -161,7 +163,7 @@ public class MessageListener extends ListenerAdapter {
 
                         } else {
 
-                            String errorMessage = "Incorrect SteamID format. Use the following format:\n" +
+                            String errorMessage = "Incorrect SteamID format. Use the following:\n" +
                                     "```!steam 123456789```";
                             event.getChannel().sendMessage(errorMessage).queue(sentMessage -> {
                                 CompletableFuture.delayedExecutor(10, TimeUnit.SECONDS).execute(() -> {
@@ -173,8 +175,7 @@ public class MessageListener extends ListenerAdapter {
 
                     } else {
 
-                        String errorMessage = "Incorrect SteamID format. Use the following format:\n" +
-                                "```!steam 123456789```";
+                        String errorMessage = "Incorrect SteamID format. Use the following:\n```!steam 123456789```";
                         event.getChannel().sendMessage(errorMessage).queue(sentMessage -> {
                             CompletableFuture.delayedExecutor(10, TimeUnit.SECONDS).execute(() -> {
                                 sentMessage.delete().queue();
@@ -200,16 +201,7 @@ public class MessageListener extends ListenerAdapter {
 
                         if (connectedVoiceChannelMembers.size() > 1) {
 
-                            Set<String> commonGames = steamAPIService.findCommonSteamGames(connectedVoiceChannelMembers);
-
-                            StringBuilder builder = new StringBuilder();
-                            for (String s: commonGames) {
-                                builder.append(s + "\n");
-                            }
-
-                            String commonGamesMessage = "```Common Games: \n" + builder.toString() + "```";
-
-                            event.getChannel().sendMessage(commonGamesMessage).queue();
+                            steamAPIService.findCommonSteamGames(event, connectedVoiceChannelMembers);
 
                         } else {
 
