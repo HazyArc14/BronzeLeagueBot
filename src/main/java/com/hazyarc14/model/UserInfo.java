@@ -25,14 +25,18 @@ public class UserInfo {
     @Column(name = "active")
     private Boolean active;
 
+    @Column(name = "steam_id")
+    private Long steamId;
+
     public UserInfo() { }
 
-    public UserInfo(Long userId, String userName, Double rank, Timestamp joinedChannelTm, Boolean active) {
+    public UserInfo(Long userId, String userName, Double rank, Timestamp joinedChannelTm, Boolean active, Long steamId) {
         this.userId = userId;
         this.userName = userName;
         this.rank = rank;
         this.joinedChannelTm = joinedChannelTm;
         this.active = active;
+        this.steamId = steamId;
     }
 
     public UserInfo(UserInfo user) {
@@ -41,6 +45,7 @@ public class UserInfo {
         this.rank = user.rank;
         this.joinedChannelTm = user.joinedChannelTm;
         this.active = user.active;
+        this.steamId = user.steamId;
     }
 
     public Long getUserId() {
@@ -76,6 +81,13 @@ public class UserInfo {
     }
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public Long getSteamId() {
+        return steamId;
+    }
+    public void setSteamId(Long steamId) {
+        this.steamId = steamId;
     }
 
 }

@@ -6,6 +6,7 @@ import com.hazyarc14.model.Command;
 import com.hazyarc14.model.UserInfo;
 import com.hazyarc14.repository.CommandRepository;
 import com.hazyarc14.repository.UserInfoRepository;
+import com.hazyarc14.service.SteamAPIService;
 import com.hazyarc14.service.UserRankService;
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
@@ -24,6 +25,7 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -51,6 +53,12 @@ public class MessageListener extends ListenerAdapter {
     @Autowired
     CommandRepository commandRepository;
 
+    @Autowired
+    SteamAPIService steamAPIService;
+
+    @Value("${bronze.league.bot.dev.mode}")
+    private Boolean devMode;
+
     private final AudioPlayerManager playerManager;
     private final Map<Long, GuildMusicManager> musicManagers;
 
@@ -64,6 +72,7 @@ public class MessageListener extends ListenerAdapter {
 
         if (event.getAuthor().isBot()) return;
 
+        Guild guild = event.getGuild();
         Message message = event.getMessage();
         String content = message.getContentRaw();
         String[] commandList = message.getContentRaw().split(" ");
@@ -77,115 +86,203 @@ public class MessageListener extends ListenerAdapter {
                 voiceChannelId = command.substring(command.lastIndexOf("$vc") + 3);
         }
 
-        if (event.getChannel().getName().equals("bot-suggestions")) {
+        if ((event.getChannel().getName().equals("bot-testing") && devMode) ||
+                (!event.getChannel().getName().equals("bot-testing") && !devMode)) {
 
-            createCommandVote(event, message, content);
+            if (event.getChannel().getName().equals("bot-suggestions")) {
 
-        } else if (commandList[0].equalsIgnoreCase("!help")) {
+                createCommandVote(event, message, content);
 
-            if (!isPrivate) {
-                message.delete().queue();
-                if (!event.getChannel().getName().equals("bot-commands")) return;
-            }
+            } else if (commandList[0].equalsIgnoreCase("!help")) {
 
-            sendHelpMessage(event, isPrivate);
-
-        } else if (commandList[0].equalsIgnoreCase("!roleRebalance")) {
-
-            message.delete().queue();
-
-            userRankService.updateAllUserRoles(event.getGuild());
-
-        } else if (commandList[0].equalsIgnoreCase("!rank")) {
-
-            if (!isPrivate) {
-                message.delete().queue();
-            }
-
-            Long targetUserId = 0L;
-
-            if (commandList.length > 1) {
-                if (commandList[1].matches("^<@!\\d*>")) {
-                    targetUserId = Long.valueOf(commandList[1].substring(3, commandList[1].length() - 1));
+                if (!isPrivate) {
+                    message.delete().queue();
+                    if (!event.getChannel().getName().equals("bot-commands")) return;
                 }
-            } else {
-                targetUserId = message.getAuthor().getIdLong();
-            }
 
-            sendRankMessage(event, isPrivate, targetUserId);
+                sendHelpMessage(event, isPrivate);
 
-        } else if (commandList[0].equalsIgnoreCase("!rankAll")) {
+            } else if (commandList[0].equalsIgnoreCase("!roleRebalance")) {
 
-            if (!isPrivate) {
                 message.delete().queue();
-            }
 
-            sendRankAllMessage(event, isPrivate);
+                userRankService.updateAllUserRoles(event.getGuild());
 
-        } else if (commandList[0].equalsIgnoreCase("!roleInfo")) {
+            } else if (commandList[0].equalsIgnoreCase("!rank")) {
 
-            if (!isPrivate) {
-                message.delete().queue();
-            }
-
-            sendRoleInfoMessage(event, isPrivate);
-
-        } else if (commandList[0].startsWith(";") && commandList[0].endsWith(";")) {
-
-            if (!isPrivate) {
-                message.delete().queue();
-            }
-
-            String command = commandList[0].substring(1, content.length() - 1);
-            sendCommand(event, isPrivate, command);
-
-        } else if (commandList[0].startsWith("!")) {
-
-            if (!voiceChannelId.equalsIgnoreCase("")) {
-                try {
-                    voiceChannel = event.getGuild().getVoiceChannelById(voiceChannelId);
-                } catch (Exception e) {
-                    log.error("Could not get voice channel by id " + voiceChannelId + " :: ", e);
+                if (!isPrivate) {
+                    message.delete().queue();
                 }
-            } else {
-                voiceChannel = event.getMember().getVoiceState().getChannel();
-            }
 
-            String commandValue = commandList[0].substring(1);
-            if (commandValue.equalsIgnoreCase("play")) {
+                Long targetUserId = 0L;
 
-                Integer trackPosition = 0;
+                if (commandList.length > 1) {
+                    if (commandList[1].matches("^<@!\\d*>")) {
+                        targetUserId = Long.valueOf(commandList[1].substring(3, commandList[1].length() - 1));
+                    }
+                } else {
+                    targetUserId = message.getAuthor().getIdLong();
+                }
 
-                if (commandList[1].contains("?t="))
-                    trackPosition = Integer.valueOf(commandList[1].substring(commandList[1].lastIndexOf("?t=") + 3));
+                sendRankMessage(event, isPrivate, targetUserId);
 
-                loadAndPlay(event.getGuild(), voiceChannel, commandList[1], trackPosition);
+            } else if (commandList[0].equalsIgnoreCase("!rankAll")) {
 
-            } else if (commandValue.equalsIgnoreCase("skip")) {
-                skipTrack(event.getGuild());
-            } else {
+                if (!isPrivate) {
+                    message.delete().queue();
+                }
 
-                VoiceChannel finalVoiceChannel = voiceChannel;
-                commandRepository.findById(commandValue).ifPresent(command -> {
+                sendRankAllMessage(event, isPrivate);
 
-                    if (command.getActive() && command.getCommandFileExtension().equalsIgnoreCase("mp3")) {
+            } else if (commandList[0].equalsIgnoreCase("!roleInfo")) {
 
-                        File commandFile = new File(command.getCommandName() + "." + command.getCommandFileExtension());
-                        try {
-                            FileUtils.writeByteArrayToFile(commandFile, command.getCommandFile());
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                if (!isPrivate) {
+                    message.delete().queue();
+                }
+
+                sendRoleInfoMessage(event, isPrivate);
+
+            } else if (commandList[0].equalsIgnoreCase("!steam")) {
+
+                if (isPrivate) {
+                    event.getPrivateChannel().sendMessage("Not able to use this command in Direct Messages").queue();
+                } else {
+
+                    message.delete().queue();
+
+                    if (commandList.length > 1) {
+
+                        if (commandList[1].matches("^\\d*")) {
+
+                            Long steamId = Long.valueOf(commandList[1]);
+                            userInfoRepository.findById(event.getAuthor().getIdLong()).ifPresent(userInfo -> {
+                                UserInfo updatedUserInfo = userInfo;
+                                updatedUserInfo.setSteamId(steamId);
+                                userInfoRepository.save(updatedUserInfo);
+                            });
+
+                        } else {
+
+                            String errorMessage = "Incorrect SteamID format. Use the following:\n" +
+                                    "```!steam 123456789```";
+                            event.getChannel().sendMessage(errorMessage).queue(sentMessage -> {
+                                CompletableFuture.delayedExecutor(10, TimeUnit.SECONDS).execute(() -> {
+                                    sentMessage.delete().queue();
+                                });
+                            });
+
                         }
 
-                        loadAndPlay(event.getGuild(), finalVoiceChannel, commandFile.getAbsolutePath(), 0);
+                    } else {
+
+                        String errorMessage = "Incorrect SteamID format. Use the following:\n```!steam 123456789```";
+                        event.getChannel().sendMessage(errorMessage).queue(sentMessage -> {
+                            CompletableFuture.delayedExecutor(10, TimeUnit.SECONDS).execute(() -> {
+                                sentMessage.delete().queue();
+                            });
+                        });
 
                     }
 
-                });
+                }
+
+            } else if (commandList[0].equalsIgnoreCase("!commonGames")) {
+
+                if (isPrivate) {
+                    event.getPrivateChannel().sendMessage("Not able to use this command in Direct Messages").queue();
+                } else {
+
+                    Long eventUserId = event.getAuthor().getIdLong();
+
+                    if (guild.getMemberById(eventUserId).getVoiceState().inVoiceChannel()) {
+
+                        VoiceChannel connectedVoiceChannel = guild.getMemberById(eventUserId).getVoiceState().getChannel();
+                        List<Member> connectedVoiceChannelMembers = connectedVoiceChannel.getMembers();
+
+                        if (connectedVoiceChannelMembers.size() > 1) {
+
+                            steamAPIService.findCommonSteamGames(event, connectedVoiceChannel.getName(), connectedVoiceChannelMembers);
+
+                        } else {
+
+                            event.getChannel().sendMessage("Not enough users in the voice channel to use that command.").queue(sentMessage -> {
+                                CompletableFuture.delayedExecutor(5, TimeUnit.SECONDS).execute(() -> {
+                                    sentMessage.delete().queue();
+                                });
+                            });
+
+                        }
+
+                    } else {
+
+                        event.getChannel().sendMessage("You have to be in a voice channel to use that command.").queue(sentMessage -> {
+                            CompletableFuture.delayedExecutor(5, TimeUnit.SECONDS).execute(() -> {
+                                sentMessage.delete().queue();
+                            });
+                        });
+
+                    }
+
+                }
+
+            } else if (commandList[0].startsWith(";") && commandList[0].endsWith(";")) {
+
+                if (!isPrivate) {
+                    message.delete().queue();
+                }
+
+                String command = commandList[0].substring(1, content.length() - 1);
+                sendCommand(event, isPrivate, command);
+
+            } else if (commandList[0].startsWith("!")) {
+
+                if (!voiceChannelId.equalsIgnoreCase("")) {
+                    try {
+                        voiceChannel = event.getGuild().getVoiceChannelById(voiceChannelId);
+                    } catch (Exception e) {
+                        log.error("Could not get voice channel by id " + voiceChannelId + " :: ", e);
+                    }
+                } else {
+                    voiceChannel = event.getMember().getVoiceState().getChannel();
+                }
+
+                String commandValue = commandList[0].substring(1);
+                if (commandValue.equalsIgnoreCase("play")) {
+
+                    Integer trackPosition = 0;
+
+                    if (commandList[1].contains("?t="))
+                        trackPosition = Integer.valueOf(commandList[1].substring(commandList[1].lastIndexOf("?t=") + 3));
+
+                    loadAndPlay(event.getGuild(), voiceChannel, commandList[1], trackPosition);
+
+                } else if (commandValue.equalsIgnoreCase("skip")) {
+                    skipTrack(event.getGuild());
+                } else {
+
+                    VoiceChannel finalVoiceChannel = voiceChannel;
+                    commandRepository.findById(commandValue).ifPresent(command -> {
+
+                        if (command.getActive() && command.getCommandFileExtension().equalsIgnoreCase("mp3")) {
+
+                            File commandFile = new File(command.getCommandName() + "." + command.getCommandFileExtension());
+                            try {
+                                FileUtils.writeByteArrayToFile(commandFile, command.getCommandFile());
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+
+                            loadAndPlay(event.getGuild(), finalVoiceChannel, commandFile.getAbsolutePath(), 0);
+
+                        }
+
+                    });
+
+                }
+
+                message.delete().queue();
 
             }
-
-            message.delete().queue();
 
         }
 
@@ -200,7 +297,9 @@ public class MessageListener extends ListenerAdapter {
         basicCommands += "!help\n" +
                 "!rank or !rank @<user> ex: !rank @HazyArc14\n" +
                 "!rankAll\n" +
-                "!roleInfo\n";
+                "!roleInfo\n" +
+                "!steam steamID ex: !steam 123456789\n" +
+                "!commonGames\n";
 
         voiceCommands += "!play <YouTube Link>\n" +
                 "!skip\n";
