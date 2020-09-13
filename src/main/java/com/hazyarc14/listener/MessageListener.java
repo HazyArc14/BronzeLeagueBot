@@ -201,7 +201,7 @@ public class MessageListener extends ListenerAdapter {
 
                         if (connectedVoiceChannelMembers.size() > 1) {
 
-                            steamAPIService.findCommonSteamGames(event, connectedVoiceChannel.getName(), connectedVoiceChannelMembers);
+                            steamAPIService.findCommonSteamGames(event, connectedVoiceChannelMembers);
 
                         } else {
 

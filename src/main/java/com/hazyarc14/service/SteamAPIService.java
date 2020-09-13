@@ -38,9 +38,10 @@ public class SteamAPIService {
     @Value("${steam.api.key}")
     private String steamAPIKey;
 
-    public void findCommonSteamGames(MessageReceivedEvent event, String voiceChannelName, List<Member> membersList) {
+    public void findCommonSteamGames(MessageReceivedEvent event, List<Member> membersList) {
 
         List<Set<String>> sets = new ArrayList<>();
+        List<String> userNamesList = new ArrayList<>();
         List<String> privateUsersList = new ArrayList<>();
         List<String> misconfiguredUsersList = new ArrayList<>();
 
@@ -76,6 +77,7 @@ public class SteamAPIService {
 
                             Set<String> newSet = new HashSet<>(gameNamesList);
                             sets.add(newSet);
+                            userNamesList.add(userInfo.getUserName());
 
                         } else {
                             privateUsersList.add(userInfo.getUserName());
@@ -126,7 +128,7 @@ public class SteamAPIService {
                 commonGames.append(s + "\n");
             }
 
-            String commonGamesMessage = "```Common Games for Voice Channel " + voiceChannelName + ": \n" + commonGames.toString() + "```\n";
+            String commonGamesMessage = "```Common Games for " + String.join(", ", userNamesList) + ": \n" + commonGames.toString() + "```\n";
             String responseMessage = commonGamesMessage;
 
             if (privateUsersList.size() >= 1)
