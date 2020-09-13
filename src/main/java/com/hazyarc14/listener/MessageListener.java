@@ -201,7 +201,7 @@ public class MessageListener extends ListenerAdapter {
 
                         if (connectedVoiceChannelMembers.size() > 1) {
 
-                            steamAPIService.findCommonSteamGames(event, connectedVoiceChannelMembers);
+                            steamAPIService.findCommonSteamGames(event, connectedVoiceChannel.getName(), connectedVoiceChannelMembers);
 
                         } else {
 
@@ -297,7 +297,9 @@ public class MessageListener extends ListenerAdapter {
         basicCommands += "!help\n" +
                 "!rank or !rank @<user> ex: !rank @HazyArc14\n" +
                 "!rankAll\n" +
-                "!roleInfo\n";
+                "!roleInfo\n" +
+                "!steam steamID ex: !steam 123456789\n" +
+                "!commonGames\n";
 
         voiceCommands += "!play <YouTube Link>\n" +
                 "!skip\n";

@@ -18,6 +18,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.*;
 
 @Service
@@ -28,13 +32,13 @@ public class SteamAPIService {
     @Autowired
     UserInfoRepository userInfoRepository;
 
-    @Value("${steam.api.base.url")
+    @Value("${steam.api.base.url}")
     private String steamApiBaseUrl;
 
-    @Value("${steam.api.key")
+    @Value("${steam.api.key}")
     private String steamAPIKey;
 
-    public void findCommonSteamGames(MessageReceivedEvent event, List<Member> membersList) {
+    public void findCommonSteamGames(MessageReceivedEvent event, String voiceChannelName, List<Member> membersList) {
 
         List<Set<String>> sets = new ArrayList<>();
         List<String> privateUsersList = new ArrayList<>();
@@ -48,14 +52,20 @@ public class SteamAPIService {
 
                 if (steamId != null) {
 
-                    try (CloseableHttpClient client = HttpClients.createDefault()) {
+                    GsonBuilder builder = new GsonBuilder();
+                    HttpClient httpClient = HttpClient.newHttpClient();
 
-                        GsonBuilder builder = new GsonBuilder();
-                        String requestUrl = steamApiBaseUrl + "&key=" + steamAPIKey + "&steamid=" + steamId;
-                        HttpGet request = new HttpGet(requestUrl);
-                        OwnedGames ownedGames = client.execute(request, httpResponse ->
-                                builder.create().fromJson(String.valueOf(httpResponse.getEntity().getContent()), OwnedGames.class));
+                    String requestUrl = steamApiBaseUrl + "&key=" + steamAPIKey + "&steamid=" + steamId;
+                    var httpRequest = HttpRequest.newBuilder()
+                            .uri(URI.create(requestUrl))
+                            .GET()
+                            .build();
 
+                    try {
+
+                        HttpResponse<String> httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+
+                        OwnedGames ownedGames = builder.create().fromJson(httpResponse.body(), OwnedGames.class);
                         Optional<Response> ownedGamesResponse = Optional.ofNullable(ownedGames.getResponse());
 
                         if (ownedGamesResponse.isPresent()) {
@@ -64,25 +74,21 @@ public class SteamAPIService {
                             List<String> gameNamesList = new ArrayList<>();
                             gamesList.forEach(game -> {  gameNamesList.add(game.getName()); });
 
-                            Set<String> newSet = new HashSet<String>(gameNamesList);
+                            Set<String> newSet = new HashSet<>(gameNamesList);
                             sets.add(newSet);
 
                         } else {
-
                             privateUsersList.add(userInfo.getUserName());
-
                         }
 
-                    } catch (ClientProtocolException e) {
-                        e.printStackTrace();
                     } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
 
                 } else {
-
                     misconfiguredUsersList.add(userInfo.getUserName());
-
                 }
 
             });
@@ -101,23 +107,32 @@ public class SteamAPIService {
         privateUsersList.forEach(user -> {
             privateUsersMessage.append(user + "\n");
         });
-        privateUsersMessage.append("```\n\n");
+        privateUsersMessage.append("```\n");
 
         if (sets.size() > 1) {
 
-            for (int i = 0; i <= sets.size(); i++) {
+            for (int i = 0; i < sets.size(); i++) {
                 if (i != 0) {
                     sets.get(0).retainAll(sets.get(i));
                 }
             }
 
             StringBuilder commonGames = new StringBuilder();
-            for (String s: sets.get(0)) {
+
+            List<String> sortedList = new ArrayList<>(sets.get(0));
+            Collections.sort(sortedList);
+
+            for (String s: sortedList) {
                 commonGames.append(s + "\n");
             }
 
-            String commonGamesMessage = "```Common Games: \n" + commonGames.toString() + "```\n\n";
-            String responseMessage = commonGamesMessage + privateUsersMessage.toString() + misconfiguredUsersMessage.toString();
+            String commonGamesMessage = "```Common Games for Voice Channel " + voiceChannelName + ": \n" + commonGames.toString() + "```\n";
+            String responseMessage = commonGamesMessage;
+
+            if (privateUsersList.size() >= 1)
+                responseMessage += privateUsersMessage.toString();
+            if (misconfiguredUsersList.size() >= 1)
+                responseMessage += misconfiguredUsersMessage.toString();
 
             event.getChannel().sendMessage(responseMessage).queue();
 
