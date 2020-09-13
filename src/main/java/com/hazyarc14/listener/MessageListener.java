@@ -192,6 +192,8 @@ public class MessageListener extends ListenerAdapter {
                     event.getPrivateChannel().sendMessage("Not able to use this command in Direct Messages").queue();
                 } else {
 
+                    message.delete().queue();
+
                     Long eventUserId = event.getAuthor().getIdLong();
 
                     if (guild.getMemberById(eventUserId).getVoiceState().inVoiceChannel()) {
