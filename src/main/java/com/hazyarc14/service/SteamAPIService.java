@@ -69,15 +69,23 @@ public class SteamAPIService {
                         OwnedGames ownedGames = builder.create().fromJson(httpResponse.body(), OwnedGames.class);
                         Optional<Response> ownedGamesResponse = Optional.ofNullable(ownedGames.getResponse());
 
-                        if (ownedGamesResponse.isPresent()) {
+                        if (ownedGamesResponse.isPresent() && !ownedGamesResponse.isEmpty()) {
 
-                            List<Game> gamesList = ownedGames.getResponse().getGames();
-                            List<String> gameNamesList = new ArrayList<>();
-                            gamesList.forEach(game -> {  gameNamesList.add(game.getName()); });
+                            if (ownedGamesResponse.get().getGames() != null && !ownedGamesResponse.get().getGames().isEmpty()) {
 
-                            Set<String> newSet = new HashSet<>(gameNamesList);
-                            sets.add(newSet);
-                            userNamesList.add(userInfo.getUserName());
+                                List<Game> gamesList = ownedGames.getResponse().getGames();
+                                List<String> gameNamesList = new ArrayList<>();
+                                gamesList.forEach(game -> {
+                                    gameNamesList.add(game.getName());
+                                });
+
+                                Set<String> newSet = new HashSet<>(gameNamesList);
+                                sets.add(newSet);
+                                userNamesList.add(userInfo.getUserName());
+
+                            } else  {
+                                privateUsersList.add(userInfo.getUserName());
+                            }
 
                         } else {
                             privateUsersList.add(userInfo.getUserName());
