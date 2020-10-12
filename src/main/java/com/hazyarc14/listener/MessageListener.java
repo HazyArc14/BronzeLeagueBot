@@ -336,7 +336,16 @@ public class MessageListener extends ListenerAdapter {
             UserInfo updatedUserInfo = userInfo;
 
             RANK currentUserRank = userRankService.calculateRoleByRank(updatedUserInfo.getRank());
+            RANK nextUserRank = currentUserRank.next();
             List<Role> roles = event.getGuild().getRolesByName(currentUserRank.getRoleName(), false);
+
+            Double pointsToNextRank = nextUserRank.getValue() - updatedUserInfo.getRank();
+            String ebDescription = "";
+            if (!nextUserRank.getRoleName().equalsIgnoreCase("MAX")) {
+                ebDescription = pointsToNextRank + " points until next rank (" + updatedUserInfo.getRank() + "/" + (int) nextUserRank.getValue() + ")";
+            } else {
+                ebDescription = "You have the highest rank in the land!";
+            }
 
             if (!roles.isEmpty()) {
 
@@ -345,18 +354,14 @@ public class MessageListener extends ListenerAdapter {
                 EmbedBuilder eb = new EmbedBuilder();
 
                 eb.setColor(rankColor);
-                eb.setTitle("Current Role is " + currentUserRank.getRoleName() + ".");
-                eb.setDescription("Rank " + String.format("%.2f", userInfo.getRank()) + " of " + currentUserRank.next().getValue());
+                eb.setTitle("Season 1 Rank: " + currentUserRank.getRoleName());
+                eb.setDescription(ebDescription);
                 eb.setAuthor(userInfo.getUserName(), null, targetMember.getUser().getAvatarUrl());
 
                 if (isPrivate)
                     event.getPrivateChannel().sendMessage("Current Role & Rank").embed(eb.build()).queue();
                 else
-                    event.getChannel().sendMessage("Current Role & Rank").embed(eb.build()).queue(sentMessage -> {
-                        CompletableFuture.delayedExecutor(15, TimeUnit.SECONDS).execute(() -> {
-                            sentMessage.delete().queue();
-                        });
-                    });
+                    event.getChannel().sendMessage("Current Role & Rank").embed(eb.build()).queue();
 
             }
 
@@ -366,13 +371,21 @@ public class MessageListener extends ListenerAdapter {
 
     private void sendRankAllMessage(MessageReceivedEvent event, Boolean isPrivate) {
 
-        String grandMasterUsers = RANK.GRANDMASTER.getRoleName() + " (" + RANK.GRANDMASTER.getValue() + "):\n";
-        String masterUsers = RANK.MASTER.getRoleName() + " (" + RANK.MASTER.getValue() + "):\n";;
-        String diamondUsers = RANK.DIAMOND.getRoleName() + " (" + RANK.DIAMOND.getValue() + "):\n";;
-        String platinumUsers = RANK.PLATINUM.getRoleName() + " (" + RANK.PLATINUM.getValue() + "):\n";;
-        String goldUsers = RANK.GOLD.getRoleName() + " (" + RANK.GOLD.getValue() + "):\n";;
-        String silverUsers = RANK.SILVER.getRoleName() + " (" + RANK.SILVER.getValue() + "):\n";;
-        String bronzeUsers = RANK.BRONZE.getRoleName() + " (" + RANK.BRONZE.getValue() + "):\n";;
+        String grandMasterTitle = RANK.GRANDMASTER.getRoleName() + " (" + (int) RANK.GRANDMASTER.getValue() + ")";
+        String masterTitle = RANK.MASTER.getRoleName() + " (" + (int) RANK.MASTER.getValue() + " - " + (int)(RANK.MASTER.next().getValue() - 1) + ")";
+        String diamondTitle = RANK.DIAMOND.getRoleName() + " (" + (int) RANK.DIAMOND.getValue() + " - " + (int)(RANK.DIAMOND.next().getValue() - 1) + ")";
+        String platinumTitle = RANK.PLATINUM.getRoleName() + " (" + (int) RANK.PLATINUM.getValue() + " - " + (int)(RANK.PLATINUM.next().getValue() - 1) + ")";
+        String goldTitle = RANK.GOLD.getRoleName() + " (" + (int) RANK.GOLD.getValue() + " - " + (int)(RANK.GOLD.next().getValue() - 1) + ")";
+        String silverTitle = RANK.SILVER.getRoleName() + " (" + (int) RANK.SILVER.getValue() + " - " + (int)(RANK.SILVER.next().getValue() - 1) + ")";
+        String bronzeTitle = RANK.BRONZE.getRoleName() + " (" + (int) RANK.BRONZE.getValue() + " - " + (int)(RANK.BRONZE.next().getValue() - 1) + ")";
+
+        String grandMasterUsers = "";
+        String masterUsers = "";
+        String diamondUsers = "";
+        String platinumUsers = "";
+        String goldUsers = "";
+        String silverUsers = "";
+        String bronzeUsers = "";
 
         List<UserInfo> userInfoList = userInfoRepository.findAll(Sort.by(Sort.Direction.DESC, "rank"));
         for (UserInfo userInfo : userInfoList) {
@@ -399,20 +412,30 @@ public class MessageListener extends ListenerAdapter {
 
         }
 
-        String rankAllMessage = "```"
-                + grandMasterUsers + "\n"
-                + masterUsers + "\n"
-                + diamondUsers + "\n"
-                + platinumUsers + "\n"
-                + goldUsers + "\n"
-                + silverUsers + "\n"
-                + bronzeUsers + "\n"
-                + "```";
+        grandMasterUsers = (grandMasterUsers.isBlank() || grandMasterUsers.isEmpty()) ? "" : "```" + grandMasterUsers + "```";
+        masterUsers = (masterUsers.isBlank() || masterUsers.isEmpty()) ? "" : "```" + masterUsers + "```";
+        diamondUsers = (diamondUsers.isBlank() || diamondUsers.isEmpty()) ? "" : "```" + diamondUsers + "```";
+        platinumUsers = (platinumUsers.isBlank() || platinumUsers.isEmpty()) ? "" : "```" + platinumUsers + "```";
+        goldUsers = (goldUsers.isBlank() || goldUsers.isEmpty()) ? "" : "```" + goldUsers + "```";
+        silverUsers = (silverUsers.isBlank() || silverUsers.isEmpty()) ? "" : "```" + silverUsers + "```";
+        bronzeUsers = (bronzeUsers.isBlank() || bronzeUsers.isEmpty()) ? "" : "```" + bronzeUsers + "```";
+
+        EmbedBuilder eb = new EmbedBuilder();
+
+        eb.setColor(Color.GREEN);
+        eb.setTitle("Season 1 Ranks");
+        eb.addField(grandMasterTitle, grandMasterUsers, false);
+        eb.addField(masterTitle, masterUsers, false);
+        eb.addField(diamondTitle, diamondUsers, false);
+        eb.addField(platinumTitle, platinumUsers, false);
+        eb.addField(goldTitle, goldUsers, false);
+        eb.addField(silverTitle, silverUsers, false);
+        eb.addField(bronzeTitle, bronzeUsers, false);
 
         if (isPrivate)
-            event.getPrivateChannel().sendMessage(rankAllMessage).queue();
+            event.getPrivateChannel().sendMessage("⠀").embed(eb.build()).queue();
         else
-            event.getChannel().sendMessage(rankAllMessage).queue();
+            event.getChannel().sendMessage("⠀").embed(eb.build()).queue();
 
     }
 

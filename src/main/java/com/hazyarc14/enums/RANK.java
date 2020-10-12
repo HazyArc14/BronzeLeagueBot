@@ -8,7 +8,8 @@ public enum RANK {
     PLATINUM("Platinum",500.0),
     DIAMOND("Diamond",1250.0),
     MASTER("Master",2000.0),
-    GRANDMASTER("GrandMaster",4000.0);
+    GRANDMASTER("GrandMaster",4000.0),
+    MAX("MAX", 9999.9);
 
     private String roleName;
     private double value;
