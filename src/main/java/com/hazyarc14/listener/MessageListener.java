@@ -342,7 +342,7 @@ public class MessageListener extends ListenerAdapter {
             Double pointsToNextRank = nextUserRank.getValue() - updatedUserInfo.getRank();
             String ebDescription = "";
             if (!nextUserRank.getRoleName().equalsIgnoreCase("MAX")) {
-                ebDescription = pointsToNextRank + " points until next rank (" + updatedUserInfo.getRank() + "/" + nextUserRank.getValue() + ")";
+                ebDescription = pointsToNextRank + " points until next rank (" + updatedUserInfo.getRank() + "/" + (int) nextUserRank.getValue() + ")";
             } else {
                 ebDescription = "You have the highest rank in the land!";
             }
@@ -371,13 +371,13 @@ public class MessageListener extends ListenerAdapter {
 
     private void sendRankAllMessage(MessageReceivedEvent event, Boolean isPrivate) {
 
-        String grandMasterTitle = RANK.GRANDMASTER.getRoleName() + " (" + RANK.GRANDMASTER.getValue() + ")";
-        String masterTitle = RANK.MASTER.getRoleName() + " (" + RANK.MASTER.getValue() + " - " + (int)(RANK.MASTER.next().getValue() - 1) + ")";
-        String diamondTitle = RANK.DIAMOND.getRoleName() + " (" + RANK.DIAMOND.getValue() + " - " + (int)(RANK.DIAMOND.next().getValue() - 1) + ")";
-        String platinumTitle = RANK.PLATINUM.getRoleName() + " (" + RANK.PLATINUM.getValue() + " - " + (int)(RANK.PLATINUM.next().getValue() - 1) + ")";
-        String goldTitle = RANK.GOLD.getRoleName() + " (" + RANK.GOLD.getValue() + " - " + (int)(RANK.GOLD.next().getValue() - 1) + ")";
-        String silverTitle = RANK.SILVER.getRoleName() + " (" + RANK.SILVER.getValue() + " - " + (int)(RANK.SILVER.next().getValue() - 1) + ")";
-        String bronzeTitle = RANK.BRONZE.getRoleName() + " (" + RANK.BRONZE.getValue() + " - " + (int)(RANK.BRONZE.next().getValue() - 1) + ")";
+        String grandMasterTitle = RANK.GRANDMASTER.getRoleName() + " (" + (int) RANK.GRANDMASTER.getValue() + ")";
+        String masterTitle = RANK.MASTER.getRoleName() + " (" + (int) RANK.MASTER.getValue() + " - " + (int)(RANK.MASTER.next().getValue() - 1) + ")";
+        String diamondTitle = RANK.DIAMOND.getRoleName() + " (" + (int) RANK.DIAMOND.getValue() + " - " + (int)(RANK.DIAMOND.next().getValue() - 1) + ")";
+        String platinumTitle = RANK.PLATINUM.getRoleName() + " (" + (int) RANK.PLATINUM.getValue() + " - " + (int)(RANK.PLATINUM.next().getValue() - 1) + ")";
+        String goldTitle = RANK.GOLD.getRoleName() + " (" + (int) RANK.GOLD.getValue() + " - " + (int)(RANK.GOLD.next().getValue() - 1) + ")";
+        String silverTitle = RANK.SILVER.getRoleName() + " (" + (int) RANK.SILVER.getValue() + " - " + (int)(RANK.SILVER.next().getValue() - 1) + ")";
+        String bronzeTitle = RANK.BRONZE.getRoleName() + " (" + (int) RANK.BRONZE.getValue() + " - " + (int)(RANK.BRONZE.next().getValue() - 1) + ")";
 
         String grandMasterUsers = "";
         String masterUsers = "";
