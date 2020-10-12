@@ -362,11 +362,6 @@ public class MessageListener extends ListenerAdapter {
                     event.getPrivateChannel().sendMessage("Current Role & Rank").embed(eb.build()).queue();
                 else
                     event.getChannel().sendMessage("Current Role & Rank").embed(eb.build()).queue();
-//                    event.getChannel().sendMessage("Current Role & Rank").embed(eb.build()).queue(sentMessage -> {
-//                        CompletableFuture.delayedExecutor(15, TimeUnit.SECONDS).execute(() -> {
-//                            sentMessage.delete().queue();
-//                        });
-//                    });
 
             }
 
@@ -428,6 +423,7 @@ public class MessageListener extends ListenerAdapter {
         EmbedBuilder eb = new EmbedBuilder();
 
         eb.setColor(Color.GREEN);
+        eb.setTitle("Season 1 Ranks");
         eb.addField(grandMasterTitle, grandMasterUsers, false);
         eb.addField(masterTitle, masterUsers, false);
         eb.addField(diamondTitle, diamondUsers, false);
@@ -437,11 +433,9 @@ public class MessageListener extends ListenerAdapter {
         eb.addField(bronzeTitle, bronzeUsers, false);
 
         if (isPrivate)
-            event.getPrivateChannel().sendMessage("Season 1 Ranks").embed(eb.build()).queue();
-//            event.getPrivateChannel().sendMessage(rankAllMessage).queue();
+            event.getPrivateChannel().sendMessage("⠀").embed(eb.build()).queue();
         else
-            event.getChannel().sendMessage("Season 1 Ranks").embed(eb.build()).queue();
-//            event.getChannel().sendMessage(rankAllMessage).queue();
+            event.getChannel().sendMessage("⠀").embed(eb.build()).queue();
 
     }
 
