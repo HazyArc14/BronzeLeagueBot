@@ -417,13 +417,13 @@ public class MessageListener extends ListenerAdapter {
 
         }
 
-        grandMasterUsers = "```" + grandMasterUsers + "```";
-        masterUsers = "```" + masterUsers + "```";
-        diamondUsers = "```" + diamondUsers + "```";
-        platinumUsers = "```" + platinumUsers + "```";
-        goldUsers = "```" + goldUsers + "```";
-        silverUsers = "```" + silverUsers + "```";
-        bronzeUsers = "```" + bronzeUsers + "```";
+        grandMasterUsers = (grandMasterUsers.isBlank() || grandMasterUsers.isEmpty()) ? "" : "```" + grandMasterUsers + "```";
+        masterUsers = (masterUsers.isBlank() || masterUsers.isEmpty()) ? "" : "```" + masterUsers + "```";
+        diamondUsers = (diamondUsers.isBlank() || diamondUsers.isEmpty()) ? "" : "```" + diamondUsers + "```";
+        platinumUsers = (platinumUsers.isBlank() || platinumUsers.isEmpty()) ? "" : "```" + platinumUsers + "```";
+        goldUsers = (goldUsers.isBlank() || goldUsers.isEmpty()) ? "" : "```" + goldUsers + "```";
+        silverUsers = (silverUsers.isBlank() || silverUsers.isEmpty()) ? "" : "```" + silverUsers + "```";
+        bronzeUsers = (bronzeUsers.isBlank() || bronzeUsers.isEmpty()) ? "" : "```" + bronzeUsers + "```";
 
         EmbedBuilder eb = new EmbedBuilder();
 
