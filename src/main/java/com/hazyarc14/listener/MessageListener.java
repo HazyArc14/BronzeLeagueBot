@@ -342,7 +342,7 @@ public class MessageListener extends ListenerAdapter {
             Double pointsToNextRank = nextUserRank.getValue() - updatedUserInfo.getRank();
             String ebDescription = "";
             if (!nextUserRank.getRoleName().equalsIgnoreCase("MAX")) {
-                ebDescription = pointsToNextRank + " points until next rank (" + updatedUserInfo.getRank() + "/" + (int) nextUserRank.getValue() + ")";
+                ebDescription = String.format("%.2f", pointsToNextRank) + " points until next rank (" + String.format("%.2f", updatedUserInfo.getRank()) + "/" + (int) nextUserRank.getValue() + ")";
             } else {
                 ebDescription = "You have the highest rank in the land!";
             }
