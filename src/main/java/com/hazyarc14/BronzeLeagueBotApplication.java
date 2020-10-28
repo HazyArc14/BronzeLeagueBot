@@ -38,7 +38,8 @@ public class BronzeLeagueBotApplication {
 	@PostConstruct
 	public void init() throws LoginException {
 
-		String BOT_TOKEN = System.getenv("BOT_TOKEN");
+		String BOT_TOKEN = "NzUyOTYyMzY2NjE3OTQ0MDg0.X1fQ2Q.i00MAFQWHfKpG4oy2Kc3g5J8Erw";
+//		String BOT_TOKEN = System.getenv("BOT_TOKEN");
 		this.jda = JDABuilder
 				.create(BOT_TOKEN, GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_VOICE_STATES, GatewayIntent.GUILD_PRESENCES, GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.DIRECT_MESSAGES)
 				.setMemberCachePolicy(MemberCachePolicy.ALL)
@@ -46,14 +47,14 @@ public class BronzeLeagueBotApplication {
 
 	}
 
-	@Scheduled(cron = "0 0 5 * * *")
-	public void applyDecayToUserRanks() {
-		userRankService.applyDecayToUserRanks(this.jda);
-	}
+//	@Scheduled(cron = "0 0 5 * * *")
+//	public void applyDecayToUserRanks() {
+//		userRankService.applyDecayToUserRanks(this.jda);
+//	}
 
-	@Scheduled(fixedDelay = 60000)
-	public void updateUserRanks() {
-		userRankService.updateAllUserRanks(this.jda);
-	}
+//	@Scheduled(fixedDelay = 60000)
+//	public void updateUserRanks() {
+//		userRankService.updateAllUserRanks(this.jda);
+//	}
 
 }
