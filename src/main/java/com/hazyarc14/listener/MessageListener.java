@@ -358,10 +358,15 @@ public class MessageListener extends ListenerAdapter {
                 eb.setDescription(ebDescription);
                 eb.setAuthor(userInfo.getUserName(), null, targetMember.getUser().getAvatarUrl());
 
-                if (isPrivate)
+                if (isPrivate) {
                     event.getPrivateChannel().sendMessage("Current Role & Rank").embed(eb.build()).queue();
-                else
-                    event.getChannel().sendMessage("Current Role & Rank").embed(eb.build()).queue();
+                } else {
+                    event.getChannel().sendMessage("Current Role & Rank").embed(eb.build()).queue(sentMessage -> {
+                        CompletableFuture.delayedExecutor(10, TimeUnit.SECONDS).execute(() -> {
+                            sentMessage.delete().queue();
+                        });
+                    });
+                }
 
             }
 
