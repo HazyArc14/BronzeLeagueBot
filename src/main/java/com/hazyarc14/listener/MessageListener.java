@@ -253,8 +253,8 @@ public class MessageListener extends ListenerAdapter {
 
                     Integer trackPosition = 0;
 
-                    if (commandList[1].contains("?t="))
-                        trackPosition = Integer.valueOf(commandList[1].substring(commandList[1].lastIndexOf("?t=") + 3));
+                    if (commandList[1].contains("&t="))
+                        trackPosition = Integer.valueOf(commandList[1].substring(commandList[1].lastIndexOf("&t=") + 3));
 
                     loadAndPlay(event.getGuild(), voiceChannel, commandList[1], trackPosition);
 
