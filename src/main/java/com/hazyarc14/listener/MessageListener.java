@@ -90,7 +90,13 @@ public class MessageListener extends ListenerAdapter {
 
             if (event.getChannel().getName().equals("bot-suggestions")) {
 
-                createCommandVote(event, message, content);
+                Boolean override = false;
+                for (String command: commandList) {
+                    if (command.contains("~override") && event.getAuthor().getIdLong() == 148630426548699136L)
+                        override = true;
+                }
+
+                createCommandVote(event, message, content, override);
 
             } else if (commandList[0].equalsIgnoreCase("!help")) {
 
@@ -530,7 +536,7 @@ public class MessageListener extends ListenerAdapter {
 
     }
 
-    private void createCommandVote(MessageReceivedEvent event, Message message, String content) {
+    private void createCommandVote(MessageReceivedEvent event, Message message, String content, Boolean override) {
 
         MessageChannel channel = event.getChannel();
         User author = event.getAuthor();
@@ -621,24 +627,33 @@ public class MessageListener extends ListenerAdapter {
 
                         if (commandSuggestion.getCommandFile() != null) {
 
-                            EmbedBuilder eb = new EmbedBuilder();
+                            if (override) {
 
-                            eb.setColor(Color.yellow);
-                            eb.setDescription("Suggested Command: " + commandSuggestion.getCommandName());
-                            eb.setAuthor(author.getName(), null, author.getAvatarUrl());
-
-                            if (commandSuggestion.getCommandFileExtension().equalsIgnoreCase("mp3")) {
-                                eb.setTitle("Add This New Voice Command?", null);
-                            } else {
-                                eb.setTitle("Add This New Emote?", null);
-                                eb.setImage("attachment://" + commandSuggestion.getCommandName() + "." + commandSuggestion.getCommandFileExtension());
-                            }
-
-                            channel.sendFile(commandSuggestion.getCommandFile(), commandSuggestion.getCommandName() + "." + commandSuggestion.getCommandFileExtension()).embed(eb.build()).queue(sentMessage -> {
-                                sentMessage.addReaction(reactionNoVote).queue();
-                                sentMessage.addReaction(reactionYesVote).queue();
+                                commandSuggestion.setActive(true);
                                 commandRepository.save(commandSuggestion);
-                            });
+
+                            } else {
+
+                                EmbedBuilder eb = new EmbedBuilder();
+
+                                eb.setColor(Color.yellow);
+                                eb.setDescription("Suggested Command: " + commandSuggestion.getCommandName());
+                                eb.setAuthor(author.getName(), null, author.getAvatarUrl());
+
+                                if (commandSuggestion.getCommandFileExtension().equalsIgnoreCase("mp3")) {
+                                    eb.setTitle("Add This New Voice Command?", null);
+                                } else {
+                                    eb.setTitle("Add This New Emote?", null);
+                                    eb.setImage("attachment://" + commandSuggestion.getCommandName() + "." + commandSuggestion.getCommandFileExtension());
+                                }
+
+                                channel.sendFile(commandSuggestion.getCommandFile(), commandSuggestion.getCommandName() + "." + commandSuggestion.getCommandFileExtension()).embed(eb.build()).queue(sentMessage -> {
+                                    sentMessage.addReaction(reactionNoVote).queue();
+                                    sentMessage.addReaction(reactionYesVote).queue();
+                                    commandRepository.save(commandSuggestion);
+                                });
+
+                            }
 
                         } else {
 
