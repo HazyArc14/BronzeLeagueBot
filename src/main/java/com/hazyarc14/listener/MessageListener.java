@@ -72,7 +72,6 @@ public class MessageListener extends ListenerAdapter {
 
         if (event.getAuthor().isBot()) return;
 
-        Guild guild = event.getGuild();
         Message message = event.getMessage();
         String content = message.getContentRaw();
         String[] commandList = message.getContentRaw().split(" ");
@@ -104,9 +103,12 @@ public class MessageListener extends ListenerAdapter {
 
             } else if (commandList[0].equalsIgnoreCase("!roleRebalance")) {
 
-                message.delete().queue();
-
-                userRankService.updateAllUserRoles(event.getGuild());
+                if (isPrivate) {
+                    event.getPrivateChannel().sendMessage("Not able to use this command in Direct Messages").queue();
+                } else {
+                    message.delete().queue();
+                    userRankService.updateAllUserRoles(event.getGuild());
+                }
 
             } else if (commandList[0].equalsIgnoreCase("!rank")) {
 
@@ -196,9 +198,9 @@ public class MessageListener extends ListenerAdapter {
 
                     Long eventUserId = event.getAuthor().getIdLong();
 
-                    if (guild.getMemberById(eventUserId).getVoiceState().inVoiceChannel()) {
+                    if (event.getGuild().getMemberById(eventUserId).getVoiceState().inVoiceChannel()) {
 
-                        VoiceChannel connectedVoiceChannel = guild.getMemberById(eventUserId).getVoiceState().getChannel();
+                        VoiceChannel connectedVoiceChannel = event.getGuild().getMemberById(eventUserId).getVoiceState().getChannel();
                         List<Member> connectedVoiceChannelMembers = connectedVoiceChannel.getMembers();
 
                         if (connectedVoiceChannelMembers.size() > 1) {
@@ -238,51 +240,57 @@ public class MessageListener extends ListenerAdapter {
 
             } else if (commandList[0].startsWith("!")) {
 
-                if (!voiceChannelId.equalsIgnoreCase("")) {
-                    try {
-                        voiceChannel = event.getGuild().getVoiceChannelById(voiceChannelId);
-                    } catch (Exception e) {
-                        log.error("Could not get voice channel by id " + voiceChannelId + " :: ", e);
+                if (isPrivate) {
+                    event.getPrivateChannel().sendMessage("Not able to use this command in Direct Messages").queue();
+                } else {
+
+                    if (!voiceChannelId.equalsIgnoreCase("")) {
+                        try {
+                            voiceChannel = event.getGuild().getVoiceChannelById(voiceChannelId);
+                        } catch (Exception e) {
+                            log.error("Could not get voice channel by id " + voiceChannelId + " :: ", e);
+                        }
+                    } else {
+                        voiceChannel = event.getMember().getVoiceState().getChannel();
                     }
-                } else {
-                    voiceChannel = event.getMember().getVoiceState().getChannel();
-                }
 
-                String commandValue = commandList[0].substring(1);
-                if (commandValue.equalsIgnoreCase("play")) {
+                    String commandValue = commandList[0].substring(1);
+                    if (commandValue.equalsIgnoreCase("play")) {
 
-                    Integer trackPosition = 0;
+                        Integer trackPosition = 0;
 
-                    if (commandList[1].contains("&t="))
-                        trackPosition = Integer.valueOf(commandList[1].substring(commandList[1].lastIndexOf("&t=") + 3));
+                        if (commandList[1].contains("&t="))
+                            trackPosition = Integer.valueOf(commandList[1].substring(commandList[1].lastIndexOf("&t=") + 3));
 
-                    loadAndPlay(event.getGuild(), voiceChannel, commandList[1], trackPosition);
+                        loadAndPlay(event.getGuild(), voiceChannel, commandList[1], trackPosition);
 
-                } else if (commandValue.equalsIgnoreCase("skip")) {
-                    skipTrack(event.getGuild());
-                } else {
+                    } else if (commandValue.equalsIgnoreCase("skip")) {
+                        skipTrack(event.getGuild());
+                    } else {
 
-                    VoiceChannel finalVoiceChannel = voiceChannel;
-                    commandRepository.findById(commandValue).ifPresent(command -> {
+                        VoiceChannel finalVoiceChannel = voiceChannel;
+                        commandRepository.findById(commandValue).ifPresent(command -> {
 
-                        if (command.getActive() && command.getCommandFileExtension().equalsIgnoreCase("mp3")) {
+                            if (command.getActive() && command.getCommandFileExtension().equalsIgnoreCase("mp3")) {
 
-                            File commandFile = new File(command.getCommandName() + "." + command.getCommandFileExtension());
-                            try {
-                                FileUtils.writeByteArrayToFile(commandFile, command.getCommandFile());
-                            } catch (IOException e) {
-                                e.printStackTrace();
+                                File commandFile = new File(command.getCommandName() + "." + command.getCommandFileExtension());
+                                try {
+                                    FileUtils.writeByteArrayToFile(commandFile, command.getCommandFile());
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+
+                                loadAndPlay(event.getGuild(), finalVoiceChannel, commandFile.getAbsolutePath(), 0);
+
                             }
 
-                            loadAndPlay(event.getGuild(), finalVoiceChannel, commandFile.getAbsolutePath(), 0);
+                        });
 
-                        }
+                    }
 
-                    });
+                    message.delete().queue();
 
                 }
-
-                message.delete().queue();
 
             }
 
