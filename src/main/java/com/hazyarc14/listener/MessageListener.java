@@ -96,7 +96,7 @@ public class MessageListener extends ListenerAdapter {
                         override = true;
                 }
 
-                createCommandVote(event, message, content, override);
+                commandVote(event, message, content, override);
 
             } else if (commandList[0].equalsIgnoreCase("!help")) {
 
@@ -536,7 +536,47 @@ public class MessageListener extends ListenerAdapter {
 
     }
 
-    private void createCommandVote(MessageReceivedEvent event, Message message, String content, Boolean override) {
+    private void commandVote(MessageReceivedEvent event, Message message, String content, Boolean override) {
+
+        MessageChannel channel = event.getChannel();
+        String action = content.split(" ")[0];
+
+        if (action.equalsIgnoreCase("!create") || action.equalsIgnoreCase("!update") || action.equalsIgnoreCase("!delete")) {
+
+            if (action.equalsIgnoreCase("!create")) {
+
+                createCommand(event, message, content, override);
+
+            } else if (action.equalsIgnoreCase("!update")) {
+
+                updateCommand(event, message, content, override);
+
+            } else if (action.equalsIgnoreCase("!delete")) {
+
+                deleteCommand(event, message, content, override);
+
+            }
+
+        } else {
+
+            message.delete().queue();
+
+            String helpMessage = "Incorrect command. Use one of the following:\n" +
+                    "```!create commandName\n" +
+                    "!update commandName\n" +
+                    "!delete commandName\n" +
+                    "ex: !create widePeppoHappy```";
+            channel.sendMessage(helpMessage).queue(sentMessage -> {
+                CompletableFuture.delayedExecutor(10, TimeUnit.SECONDS).execute(() -> {
+                    sentMessage.delete().queue();
+                });
+            });
+
+        }
+
+    }
+
+    private void createCommand(MessageReceivedEvent event, Message message, String content, Boolean override) {
 
         MessageChannel channel = event.getChannel();
         User author = event.getAuthor();
@@ -544,20 +584,7 @@ public class MessageListener extends ListenerAdapter {
         List<String> contentList = Arrays.asList(content.split(" "));
         List<Message.Attachment> attachmentList = message.getAttachments();
 
-        if (!content.startsWith("!new") || (contentList.size() < 2 || attachmentList.size() == 0)) {
-
-            message.delete().queue();
-
-            String helpMessage = "Incorrect command. Use the following:\n" +
-                    "```!new commandName\n" +
-                    "ex: !new widePeppoHappy```";
-            channel.sendMessage(helpMessage).queue(sentMessage -> {
-                CompletableFuture.delayedExecutor(10, TimeUnit.SECONDS).execute(() -> {
-                    sentMessage.delete().queue();
-                });
-            });
-
-        } else if (attachmentList.size() > 1) {
+        if (attachmentList.size() > 1) {
 
             message.delete().queue();
 
@@ -611,65 +638,279 @@ public class MessageListener extends ListenerAdapter {
 
                     }
 
-                }, () -> {
+                }, () -> attachment.retrieveInputStream().whenComplete((inputStream, throwable) -> {
 
-                    attachment.retrieveInputStream().whenComplete((inputStream, throwable) -> {
+                    if (throwable != null)
+                        log.error("Error:", throwable);
 
-                        if (throwable != null)
-                            log.error("Error:", throwable);
+                    try {
+                        commandSuggestion.setCommandFile(inputStream.readAllBytes());
+                        inputStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
 
-                        try {
-                            commandSuggestion.setCommandFile(inputStream.readAllBytes());
-                            inputStream.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                    if (commandSuggestion.getCommandFile() != null) {
 
-                        if (commandSuggestion.getCommandFile() != null) {
+                        if (override) {
 
-                            if (override) {
+                            commandSuggestion.setActive(true);
+                            commandRepository.save(commandSuggestion);
 
-                                commandSuggestion.setActive(true);
-                                commandRepository.save(commandSuggestion);
+                            EmbedBuilder eb = new EmbedBuilder();
+                            eb.setColor(Color.green);
+                            eb.setDescription("Command: " + commandSuggestion.getCommandName());
+                            eb.setTitle("Voting Closed - Command Suggestion Approved", null);
+                            eb.setAuthor(author.getName(), null, author.getAvatarUrl());
+                            eb.setFooter("Override");
 
-                            } else {
+                            if (!commandSuggestion.getCommandFileExtension().equalsIgnoreCase("mp3"))
+                                eb.setImage("attachment://" + commandSuggestion.getCommandName() + "." + commandSuggestion.getCommandFileExtension());
 
-                                EmbedBuilder eb = new EmbedBuilder();
-
-                                eb.setColor(Color.yellow);
-                                eb.setDescription("Suggested Command: " + commandSuggestion.getCommandName());
-                                eb.setAuthor(author.getName(), null, author.getAvatarUrl());
-
-                                if (commandSuggestion.getCommandFileExtension().equalsIgnoreCase("mp3")) {
-                                    eb.setTitle("Add This New Voice Command?", null);
-                                } else {
-                                    eb.setTitle("Add This New Emote?", null);
-                                    eb.setImage("attachment://" + commandSuggestion.getCommandName() + "." + commandSuggestion.getCommandFileExtension());
-                                }
-
-                                channel.sendFile(commandSuggestion.getCommandFile(), commandSuggestion.getCommandName() + "." + commandSuggestion.getCommandFileExtension()).embed(eb.build()).queue(sentMessage -> {
-                                    sentMessage.addReaction(reactionNoVote).queue();
-                                    sentMessage.addReaction(reactionYesVote).queue();
-                                    commandRepository.save(commandSuggestion);
-                                });
-
-                            }
+                            event.getChannel().sendFile(commandSuggestion.getCommandFile(), commandSuggestion.getCommandName() + "." + commandSuggestion.getCommandFileExtension()).embed(eb.build()).queue();
 
                         } else {
 
-                            log.info("File was empty");
+                            EmbedBuilder eb = new EmbedBuilder();
+
+                            eb.setColor(Color.yellow);
+                            eb.setDescription("Create Command: " + commandSuggestion.getCommandName());
+                            eb.setAuthor(author.getName(), null, author.getAvatarUrl());
+
+                            if (commandSuggestion.getCommandFileExtension().equalsIgnoreCase("mp3")) {
+                                eb.setTitle("Add This New Voice Command?", null);
+                            } else {
+                                eb.setTitle("Add This New Emote?", null);
+                                eb.setImage("attachment://" + commandSuggestion.getCommandName() + "." + commandSuggestion.getCommandFileExtension());
+                            }
+
+                            channel.sendFile(commandSuggestion.getCommandFile(), commandSuggestion.getCommandName() + "." + commandSuggestion.getCommandFileExtension()).embed(eb.build()).queue(sentMessage -> {
+                                sentMessage.addReaction(reactionNoVote).queue();
+                                sentMessage.addReaction(reactionYesVote).queue();
+                                commandRepository.save(commandSuggestion);
+                            });
 
                         }
 
-                        message.delete().queue();
+                    } else {
 
-                    });
+                        log.info("File was empty");
 
-                });
+                    }
+
+                    message.delete().queue();
+
+                }));
 
             }
 
         }
+
+    }
+
+    private void updateCommand(MessageReceivedEvent event, Message message, String content, Boolean override) {
+
+        MessageChannel channel = event.getChannel();
+        User author = event.getAuthor();
+
+        List<String> contentList = Arrays.asList(content.split(" "));
+        List<Message.Attachment> attachmentList = message.getAttachments();
+
+        if (attachmentList.size() > 1) {
+
+            message.delete().queue();
+
+            channel.sendMessage("You can only upload one attachment at a time.").queue(sentMessage -> {
+                CompletableFuture.delayedExecutor(10, TimeUnit.SECONDS).execute(() -> {
+                    sentMessage.delete().queue();
+                });
+            });
+
+        } else {
+
+            Message.Attachment attachment = attachmentList.get(0);
+            String fileExtension = attachment.getFileExtension();
+
+            if (!allowedFileExtensions.contains(fileExtension)) {
+
+                message.delete().queue();
+
+                channel.sendMessage("Incorrect file extension. Use one of the following: " + allowedFileExtensions.toString()).queue(sentMessage -> {
+                    CompletableFuture.delayedExecutor(10, TimeUnit.SECONDS).execute(() -> {
+                        sentMessage.delete().queue();
+                    });
+                });
+
+            } else {
+
+                String commandSuggestionName = contentList.get(1);
+
+                Command commandSuggestion = new Command();
+                commandSuggestion.setCommandName("~update~_" + commandSuggestionName);
+                commandSuggestion.setCommandFileExtension(fileExtension);
+                commandSuggestion.setActive(false);
+
+                commandRepository.findById(commandSuggestionName).ifPresentOrElse(existingCommand -> {
+
+                    if (existingCommand.getActive()) {
+
+                        attachment.retrieveInputStream().whenComplete((inputStream, throwable) -> {
+
+                            if (throwable != null)
+                                log.error("Error:", throwable);
+
+                            try {
+                                commandSuggestion.setCommandFile(inputStream.readAllBytes());
+                                inputStream.close();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+
+                            if (commandSuggestion.getCommandFile() != null) {
+
+                                if (override) {
+
+                                    commandSuggestion.setActive(true);
+                                    commandRepository.delete(existingCommand);
+                                    commandRepository.save(commandSuggestion);
+
+                                    EmbedBuilder eb = new EmbedBuilder();
+                                    eb.setColor(Color.green);
+                                    eb.setDescription("Command: " + commandSuggestion.getCommandName());
+                                    eb.setTitle("Voting Closed - Command Suggestion Approved", null);
+                                    eb.setAuthor(author.getName(), null, author.getAvatarUrl());
+                                    eb.setFooter("Override");
+
+                                    if (!commandSuggestion.getCommandFileExtension().equalsIgnoreCase("mp3"))
+                                        eb.setImage("attachment://" + commandSuggestion.getCommandName() + "." + commandSuggestion.getCommandFileExtension());
+
+                                    event.getChannel().sendFile(commandSuggestion.getCommandFile(), commandSuggestion.getCommandName() + "." + commandSuggestion.getCommandFileExtension()).embed(eb.build()).queue();
+
+                                } else {
+
+                                    EmbedBuilder eb = new EmbedBuilder();
+
+                                    eb.setColor(Color.yellow);
+                                    eb.setDescription("Update Command: " + commandSuggestion.getCommandName());
+                                    eb.setAuthor(author.getName(), null, author.getAvatarUrl());
+
+                                    if (commandSuggestion.getCommandFileExtension().equalsIgnoreCase("mp3")) {
+                                        eb.setTitle("Update The Existing Voice Command to This?", null);
+                                    } else {
+                                        eb.setTitle("Update This Existing Emote to This?", null);
+                                        eb.setImage("attachment://" + commandSuggestion.getCommandName() + "." + commandSuggestion.getCommandFileExtension());
+                                    }
+
+                                    channel.sendFile(commandSuggestion.getCommandFile(), commandSuggestion.getCommandName() + "." + commandSuggestion.getCommandFileExtension()).embed(eb.build()).queue(sentMessage -> {
+                                        sentMessage.addReaction(reactionNoVote).queue();
+                                        sentMessage.addReaction(reactionYesVote).queue();
+                                        commandRepository.save(commandSuggestion);
+                                    });
+
+                                }
+
+                            } else {
+
+                                log.info("File was empty");
+
+                            }
+
+                            message.delete().queue();
+
+                        });
+
+                    } else {
+
+                        channel.sendMessage("The `" + existingCommand.getCommandName() + "` command is still being voted on.").queue(sentMessage -> {
+                            CompletableFuture.delayedExecutor(5, TimeUnit.SECONDS).execute(() -> {
+                                sentMessage.delete().queue();
+                            });
+                        });
+
+                    }
+
+                }, () -> channel.sendMessage("The `" + commandSuggestionName + "` command doesn't exist.").queue(sentMessage -> {
+                    CompletableFuture.delayedExecutor(5, TimeUnit.SECONDS).execute(() -> {
+                        sentMessage.delete().queue();
+                    });
+                }));
+
+            }
+
+        }
+
+    }
+
+    private void deleteCommand(MessageReceivedEvent event, Message message, String content, Boolean override) {
+
+        MessageChannel channel = event.getChannel();
+        User author = event.getAuthor();
+
+        List<String> contentList = Arrays.asList(content.split(" "));
+        String commandName = contentList.get(1);
+
+        commandRepository.findById(commandName).ifPresentOrElse(command -> {
+
+            if (command.getActive()) {
+
+                if (command.getCommandFile() != null) {
+
+                    if (override) {
+                        commandRepository.delete(command);
+                        channel.sendMessage("The `" + command.getCommandName() + "` command has been deleted.").queue(sentMessage -> {
+                            CompletableFuture.delayedExecutor(5, TimeUnit.SECONDS).execute(() -> {
+                                sentMessage.delete().queue();
+                            });
+                        });
+                    } else {
+
+                        EmbedBuilder eb = new EmbedBuilder();
+
+                        eb.setColor(Color.yellow);
+                        eb.setDescription("Delete Command: " + command.getCommandName());
+                        eb.setAuthor(author.getName(), null, author.getAvatarUrl());
+
+                        if (command.getCommandFileExtension().equalsIgnoreCase("mp3")) {
+                            eb.setTitle("Delete This Existing Voice Command?", null);
+                        } else {
+                            eb.setTitle("Delete This Existing Emote?", null);
+                            eb.setImage("attachment://" + command.getCommandName() + "." + command.getCommandFileExtension());
+                        }
+
+                        channel.sendFile(command.getCommandFile(), command.getCommandName() + "." + command.getCommandFileExtension()).embed(eb.build()).queue(sentMessage -> {
+                            sentMessage.addReaction(reactionNoVote).queue();
+                            sentMessage.addReaction(reactionYesVote).queue();
+                        });
+
+                    }
+
+                } else {
+
+                    log.info("File was empty");
+
+                }
+
+                message.delete().queue();
+
+            } else {
+
+                channel.sendMessage("The `" + command.getCommandName() + "` command is still being voted on.").queue(sentMessage -> {
+                    CompletableFuture.delayedExecutor(5, TimeUnit.SECONDS).execute(() -> {
+                        sentMessage.delete().queue();
+                    });
+                });
+
+            }
+
+        }, () -> {
+
+            channel.sendMessage("The `" + commandName + "` command doesn't exist.").queue(sentMessage -> {
+                CompletableFuture.delayedExecutor(5, TimeUnit.SECONDS).execute(() -> {
+                    sentMessage.delete().queue();
+                });
+            });
+
+        });
 
     }
 
@@ -694,8 +935,26 @@ public class MessageListener extends ListenerAdapter {
 
             if (messageEmbed.getFooter() != null) return;
 
+            String commandAction = messageEmbed.getDescription().split(" ")[0];
             String commandName = messageEmbed.getDescription().split(": ")[1];
-            commandRepository.findById(commandName).ifPresent(command -> {
+            String searchCommandName = "";
+            Boolean isUpdateCommand = false;
+            Boolean isDeleteCommand = false;
+
+            if (commandAction.equalsIgnoreCase("update")) {
+                isUpdateCommand = true;
+                searchCommandName = "~update~_" + commandName;
+            } else if (commandAction.equalsIgnoreCase("delete")) {
+                isDeleteCommand = true;
+            } else {
+                searchCommandName = commandName;
+            }
+
+            String finalSearchCommandName = searchCommandName;
+            Boolean finalIsUpdateCommand = isUpdateCommand;
+            Boolean finalIsDeleteCommand = isDeleteCommand;
+
+            commandRepository.findById(searchCommandName).ifPresent(command -> {
 
                 if (reactionAdded.equalsIgnoreCase(reactionNoVote)) {
 
@@ -769,6 +1028,13 @@ public class MessageListener extends ListenerAdapter {
                         responseMessage = "Command Suggestion Approved";
                         eb.setColor(Color.green);
                         eb.setDescription("Command: " + command.getCommandName());
+                        if (finalIsUpdateCommand) {
+                            responseMessage = "Command Update Approved";
+                            command.setCommandName(command.getCommandName().replace("~update~_", ""));
+                        } else if (finalIsDeleteCommand) {
+                            responseMessage = "Command Delete Approved";
+                            eb.setColor(Color.red);
+                        }
                     }
 
                     eb.setTitle("Voting Closed - " + responseMessage, null);
@@ -783,7 +1049,12 @@ public class MessageListener extends ListenerAdapter {
 
                     message.delete().queue();
 
-                    if (approved) {
+                    if (approved && !finalIsDeleteCommand) {
+                        if (finalIsUpdateCommand) {
+                            commandRepository.findById(commandName).ifPresent(oldCommand -> {
+                                commandRepository.delete(oldCommand);
+                            });
+                        }
                         command.setActive(true);
                         commandRepository.save(command);
                     } else {
