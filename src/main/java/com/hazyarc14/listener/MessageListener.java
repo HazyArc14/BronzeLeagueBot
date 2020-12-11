@@ -541,7 +541,8 @@ public class MessageListener extends ListenerAdapter {
         MessageChannel channel = event.getChannel();
         String action = content.split(" ")[0];
 
-        if (action.equalsIgnoreCase("!create") || action.equalsIgnoreCase("!update") || action.equalsIgnoreCase("!delete")) {
+        if (action.equalsIgnoreCase("!create") ||
+                ((action.equalsIgnoreCase("!update") || action.equalsIgnoreCase("!delete")) && override)) {
 
             if (action.equalsIgnoreCase("!create")) {
 
@@ -563,9 +564,12 @@ public class MessageListener extends ListenerAdapter {
 
             String helpMessage = "Incorrect command. Use one of the following:\n" +
                     "```!create commandName\n" +
-                    "!update commandName\n" +
-                    "!delete commandName\n" +
                     "ex: !create widePeppoHappy```";
+//            String helpMessage = "Incorrect command. Use one of the following:\n" +
+//                    "```!create commandName\n" +
+//                    "!update commandName\n" +
+//                    "!delete commandName\n" +
+//                    "ex: !create widePeppoHappy```";
             channel.sendMessage(helpMessage).queue(sentMessage -> {
                 CompletableFuture.delayedExecutor(10, TimeUnit.SECONDS).execute(() -> {
                     sentMessage.delete().queue();
@@ -792,7 +796,7 @@ public class MessageListener extends ListenerAdapter {
                                     EmbedBuilder eb = new EmbedBuilder();
 
                                     eb.setColor(Color.yellow);
-                                    eb.setDescription("Update Command: " + commandSuggestion.getCommandName());
+                                    eb.setDescription("Update Command: " + commandSuggestionName);
                                     eb.setAuthor(author.getName(), null, author.getAvatarUrl());
 
                                     if (commandSuggestion.getCommandFileExtension().equalsIgnoreCase("mp3")) {
