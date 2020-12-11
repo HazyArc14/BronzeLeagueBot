@@ -770,13 +770,14 @@ public class MessageListener extends ListenerAdapter {
 
                                 if (override) {
 
+                                    commandSuggestion.setCommandName(commandSuggestionName);
                                     commandSuggestion.setActive(true);
                                     commandRepository.delete(existingCommand);
                                     commandRepository.save(commandSuggestion);
 
                                     EmbedBuilder eb = new EmbedBuilder();
                                     eb.setColor(Color.green);
-                                    eb.setDescription("Command: " + commandSuggestion.getCommandName());
+                                    eb.setDescription("Command: " + commandSuggestionName);
                                     eb.setTitle("Voting Closed - Command Suggestion Approved", null);
                                     eb.setAuthor(author.getName(), null, author.getAvatarUrl());
                                     eb.setFooter("Override");
@@ -820,20 +821,22 @@ public class MessageListener extends ListenerAdapter {
                         });
 
                     } else {
-
+                        message.delete().queue();
                         channel.sendMessage("The `" + existingCommand.getCommandName() + "` command is still being voted on.").queue(sentMessage -> {
                             CompletableFuture.delayedExecutor(5, TimeUnit.SECONDS).execute(() -> {
                                 sentMessage.delete().queue();
                             });
                         });
-
                     }
 
-                }, () -> channel.sendMessage("The `" + commandSuggestionName + "` command doesn't exist.").queue(sentMessage -> {
-                    CompletableFuture.delayedExecutor(5, TimeUnit.SECONDS).execute(() -> {
-                        sentMessage.delete().queue();
+                }, () -> {
+                    message.delete().queue();
+                    channel.sendMessage("The `" + commandSuggestionName + "` command doesn't exist.").queue(sentMessage -> {
+                        CompletableFuture.delayedExecutor(5, TimeUnit.SECONDS).execute(() -> {
+                            sentMessage.delete().queue();
+                        });
                     });
-                }));
+                });
 
             }
 
@@ -957,45 +960,26 @@ public class MessageListener extends ListenerAdapter {
             commandRepository.findById(searchCommandName).ifPresent(command -> {
 
                 if (reactionAdded.equalsIgnoreCase(reactionNoVote)) {
-
                     messageReactions.forEach(reaction -> {
-
                         if (reaction.getReactionEmote().getAsCodepoints().equalsIgnoreCase(reactionYesVote)) {
-
                             reaction.retrieveUsers().forEach(user -> {
-
                                 if (user.getIdLong() == reactionUser.getIdLong()) {
-
                                     reaction.removeReaction(reactionUser).queue();
-
                                 }
-
                             });
-
                         }
-
                     });
 
                 } else if (reactionAdded.equalsIgnoreCase(reactionYesVote)) {
-
                     messageReactions.forEach(reaction -> {
-
                         if (reaction.getReactionEmote().getAsCodepoints().equalsIgnoreCase(reactionNoVote)) {
-
                             reaction.retrieveUsers().forEach(user -> {
-
                                 if (user.getIdLong() == reactionUser.getIdLong()) {
-
                                     reaction.removeReaction(reactionUser).queue();
-
                                 }
-
                             });
-
                         }
-
                     });
-
                 }
 
                 Integer noVotesCount = 0;
