@@ -782,7 +782,7 @@ public class MessageListener extends ListenerAdapter {
                                     EmbedBuilder eb = new EmbedBuilder();
                                     eb.setColor(Color.green);
                                     eb.setDescription("Command: " + commandSuggestionName);
-                                    eb.setTitle("Voting Closed - Command Suggestion Approved", null);
+                                    eb.setTitle("Voting Closed - Command Update Approved", null);
                                     eb.setAuthor(author.getName(), null, author.getAvatarUrl());
                                     eb.setFooter("Override");
 
