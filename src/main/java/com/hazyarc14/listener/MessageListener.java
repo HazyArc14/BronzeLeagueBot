@@ -420,13 +420,13 @@ public class MessageListener extends ListenerAdapter {
         var currentSeason = seasonInfoRepository.findById("current_season").stream().findFirst().get().getValue();
         var seasonRoles = seasonRolesRepository.findAllBySeason(currentSeason);
 
-        SeasonRole bronze = seasonRoles.stream().filter(s -> s.getRoleName() == "Bronze").findFirst().get();
-        SeasonRole silver = seasonRoles.stream().filter(s -> s.getRoleName() == "Silver").findFirst().get();
-        SeasonRole gold = seasonRoles.stream().filter(s -> s.getRoleName() == "Gold").findFirst().get();
-        SeasonRole platinum = seasonRoles.stream().filter(s -> s.getRoleName() == "Platinum").findFirst().get();
-        SeasonRole diamond = seasonRoles.stream().filter(s -> s.getRoleName() == "Diamond").findFirst().get();
-        SeasonRole master = seasonRoles.stream().filter(s -> s.getRoleName() == "Master").findFirst().get();
-        SeasonRole grandMaster = seasonRoles.stream().filter(s -> s.getRoleName() == "GrandMaster").findFirst().get();
+        SeasonRole bronze = seasonRoles.stream().filter(s -> s.getRoleName().equalsIgnoreCase("Bronze")).findFirst().get();
+        SeasonRole silver = seasonRoles.stream().filter(s -> s.getRoleName().equalsIgnoreCase("Silver")).findFirst().get();
+        SeasonRole gold = seasonRoles.stream().filter(s -> s.getRoleName().equalsIgnoreCase("Gold")).findFirst().get();
+        SeasonRole platinum = seasonRoles.stream().filter(s -> s.getRoleName().equalsIgnoreCase("Platinum")).findFirst().get();
+        SeasonRole diamond = seasonRoles.stream().filter(s -> s.getRoleName().equalsIgnoreCase("Diamond")).findFirst().get();
+        SeasonRole master = seasonRoles.stream().filter(s -> s.getRoleName().equalsIgnoreCase("Master")).findFirst().get();
+        SeasonRole grandMaster = seasonRoles.stream().filter(s -> s.getRoleName().equalsIgnoreCase("GrandMaster")).findFirst().get();
 
         String grandMasterTitle = grandMaster.getRoleName() + " (" + (int) grandMaster.getRoleValue() + ")";
         String masterTitle = master.getRoleName() + " (" + (int) master.getRoleValue() + " - " + (int)(grandMaster.getRoleValue() - 1) + ")";
@@ -1281,8 +1281,8 @@ public class MessageListener extends ListenerAdapter {
 
             userInfoRepository.findAll().forEach(userInfo -> {
 
-                var bronzeRankValue = seasonRolesRepository.findAllBySeason("season_2").stream().filter(s -> s.getRoleName() == "Bronze").findFirst().get().getRoleValue();
-                var silverRankValue = seasonRolesRepository.findAllBySeason("season_2").stream().filter(s -> s.getRoleName() == "Silver").findFirst().get().getRoleValue();
+                var bronzeRankValue = seasonRolesRepository.findAllBySeason("season_2").stream().filter(s -> s.getRoleName().equalsIgnoreCase("Bronze")).findFirst().get().getRoleValue();
+                var silverRankValue = seasonRolesRepository.findAllBySeason("season_2").stream().filter(s -> s.getRoleName().equalsIgnoreCase("Silver")).findFirst().get().getRoleValue();
 
                 // Start Users out in Silver if at least Silver in Previous Season
                 if (userInfo.getRank() >= silverRankValue) {
