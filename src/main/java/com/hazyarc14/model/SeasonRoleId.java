@@ -2,10 +2,8 @@ package com.hazyarc14.model;
 
 import lombok.Data;
 
-import javax.persistence.Entity;
 import java.io.Serializable;
 
-@Entity
 @Data
 public class SeasonRoleId implements Serializable {
 
