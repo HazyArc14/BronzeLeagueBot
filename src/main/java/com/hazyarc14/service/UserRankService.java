@@ -197,8 +197,6 @@ public class UserRankService {
         var currentSeason = seasonInfoRepository.findById("current_season").stream().findFirst().get().getValue();
         var seasonRoles = seasonRolesRepository.findAllBySeason(currentSeason);
 
-        log.info("Season Roles Size: {}", seasonRoles.size());
-
         SeasonRole role = null;
 
         SeasonRole bronze = seasonRoles.stream().filter(s -> s.getRoleName().equalsIgnoreCase("Bronze")).findFirst().get();
