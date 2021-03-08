@@ -1,11 +1,11 @@
 package com.hazyarc14.listener;
 
 import com.hazyarc14.audio.GuildMusicManager;
-import com.hazyarc14.enums.RANK;
 import com.hazyarc14.model.Command;
+import com.hazyarc14.model.SeasonArchive;
+import com.hazyarc14.model.SeasonRole;
 import com.hazyarc14.model.UserInfo;
-import com.hazyarc14.repository.CommandRepository;
-import com.hazyarc14.repository.UserInfoRepository;
+import com.hazyarc14.repository.*;
 import com.hazyarc14.service.SteamAPIService;
 import com.hazyarc14.service.UserRankService;
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
@@ -32,12 +32,13 @@ import org.springframework.stereotype.Service;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.sql.Timestamp;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 @Service
 public class MessageListener extends ListenerAdapter {
@@ -52,6 +53,15 @@ public class MessageListener extends ListenerAdapter {
 
     @Autowired
     CommandRepository commandRepository;
+
+    @Autowired
+    SeasonInfoRepository seasonInfoRepository;
+
+    @Autowired
+    SeasonRolesRepository seasonRolesRepository;
+
+    @Autowired
+    SeasonArchiveRepository seasonArchiveRepository;
 
     @Autowired
     SteamAPIService steamAPIService;
@@ -106,6 +116,15 @@ public class MessageListener extends ListenerAdapter {
                 }
 
                 sendHelpMessage(event, isPrivate);
+
+            } else if (commandList[0].equalsIgnoreCase("!startSeason2")) {
+
+                if (isPrivate) {
+                    event.getPrivateChannel().sendMessage("Not able to use this command in Direct Messages").queue();
+                } else {
+                    message.delete().queue();
+                    startSeason2(event);
+                }
 
             } else if (commandList[0].equalsIgnoreCase("!roleRebalance")) {
 
@@ -349,26 +368,34 @@ public class MessageListener extends ListenerAdapter {
             Member targetMember = event.getGuild().getMemberById(targetUserId);
             UserInfo updatedUserInfo = userInfo;
 
-            RANK currentUserRank = userRankService.calculateRoleByRank(updatedUserInfo.getRank());
-            RANK nextUserRank = currentUserRank.next();
+            SeasonRole currentUserRank = userRankService.calculateRoleByRank(updatedUserInfo.getRank());
+            SeasonRole nextUserRank = userRankService.nextSeasonRole(currentUserRank);
             List<Role> roles = event.getGuild().getRolesByName(currentUserRank.getRoleName(), false);
 
-            Double pointsToNextRank = nextUserRank.getValue() - updatedUserInfo.getRank();
-            String ebDescription = "";
+            Double pointsToNextRank = nextUserRank.getRoleValue() - updatedUserInfo.getRank();
+            String ebDescription;
             if (!nextUserRank.getRoleName().equalsIgnoreCase("MAX")) {
-                ebDescription = String.format("%.2f", pointsToNextRank) + " points until next rank (" + String.format("%.2f", updatedUserInfo.getRank()) + "/" + (int) nextUserRank.getValue() + ")";
+                ebDescription = String.format("%.2f", pointsToNextRank) + " points until next rank (" + String.format("%.2f", updatedUserInfo.getRank()) + "/" + (int) nextUserRank.getRoleValue() + ")";
             } else {
                 ebDescription = "You have the highest rank in the land!";
             }
 
             if (!roles.isEmpty()) {
 
+                var currentSeason = seasonInfoRepository.findById("current_season").stream().findFirst().get().getValue();
+                String seasonEmbedTitle = null;
+                if (currentSeason.equalsIgnoreCase("season_1")) {
+                    seasonEmbedTitle = "Season 1";
+                } else if (currentSeason.equalsIgnoreCase("season_2")) {
+                    seasonEmbedTitle = "Season 2";
+                }
+
                 Color rankColor = roles.get(0).getColor();
 
                 EmbedBuilder eb = new EmbedBuilder();
 
                 eb.setColor(rankColor);
-                eb.setTitle("Season 1 Rank: " + currentUserRank.getRoleName());
+                eb.setTitle(seasonEmbedTitle + " Rank: " + currentUserRank.getRoleName());
                 eb.setDescription(ebDescription);
                 eb.setAuthor(userInfo.getUserName(), null, targetMember.getUser().getAvatarUrl());
 
@@ -390,13 +417,24 @@ public class MessageListener extends ListenerAdapter {
 
     private void sendRankAllMessage(MessageReceivedEvent event, Boolean isPrivate) {
 
-        String grandMasterTitle = RANK.GRANDMASTER.getRoleName() + " (" + (int) RANK.GRANDMASTER.getValue() + ")";
-        String masterTitle = RANK.MASTER.getRoleName() + " (" + (int) RANK.MASTER.getValue() + " - " + (int)(RANK.MASTER.next().getValue() - 1) + ")";
-        String diamondTitle = RANK.DIAMOND.getRoleName() + " (" + (int) RANK.DIAMOND.getValue() + " - " + (int)(RANK.DIAMOND.next().getValue() - 1) + ")";
-        String platinumTitle = RANK.PLATINUM.getRoleName() + " (" + (int) RANK.PLATINUM.getValue() + " - " + (int)(RANK.PLATINUM.next().getValue() - 1) + ")";
-        String goldTitle = RANK.GOLD.getRoleName() + " (" + (int) RANK.GOLD.getValue() + " - " + (int)(RANK.GOLD.next().getValue() - 1) + ")";
-        String silverTitle = RANK.SILVER.getRoleName() + " (" + (int) RANK.SILVER.getValue() + " - " + (int)(RANK.SILVER.next().getValue() - 1) + ")";
-        String bronzeTitle = RANK.BRONZE.getRoleName() + " (" + (int) RANK.BRONZE.getValue() + " - " + (int)(RANK.BRONZE.next().getValue() - 1) + ")";
+        var currentSeason = seasonInfoRepository.findById("current_season").stream().findFirst().get().getValue();
+        var seasonRoles = seasonRolesRepository.findAllBySeason(currentSeason);
+
+        SeasonRole bronze = seasonRoles.stream().filter(s -> s.getRoleName() == "Bronze").findFirst().get();
+        SeasonRole silver = seasonRoles.stream().filter(s -> s.getRoleName() == "Silver").findFirst().get();
+        SeasonRole gold = seasonRoles.stream().filter(s -> s.getRoleName() == "Gold").findFirst().get();
+        SeasonRole platinum = seasonRoles.stream().filter(s -> s.getRoleName() == "Platinum").findFirst().get();
+        SeasonRole diamond = seasonRoles.stream().filter(s -> s.getRoleName() == "Diamond").findFirst().get();
+        SeasonRole master = seasonRoles.stream().filter(s -> s.getRoleName() == "Master").findFirst().get();
+        SeasonRole grandMaster = seasonRoles.stream().filter(s -> s.getRoleName() == "GrandMaster").findFirst().get();
+
+        String grandMasterTitle = grandMaster.getRoleName() + " (" + (int) grandMaster.getRoleValue() + ")";
+        String masterTitle = master.getRoleName() + " (" + (int) master.getRoleValue() + " - " + (int)(grandMaster.getRoleValue() - 1) + ")";
+        String diamondTitle = diamond.getRoleName() + " (" + (int) diamond.getRoleValue() + " - " + (int)(master.getRoleValue() - 1) + ")";
+        String platinumTitle = platinum.getRoleName() + " (" + (int) platinum.getRoleValue() + " - " + (int)(diamond.getRoleValue() - 1) + ")";
+        String goldTitle = gold.getRoleName() + " (" + (int) gold.getRoleValue() + " - " + (int)(platinum.getRoleValue() - 1) + ")";
+        String silverTitle = silver.getRoleName() + " (" + (int) silver.getRoleValue() + " - " + (int)(gold.getRoleValue() - 1) + ")";
+        String bronzeTitle = bronze.getRoleName() + " (" + (int) bronze.getRoleValue() + " - " + (int)(silver.getRoleValue() - 1) + ")";
 
         String grandMasterUsers = "";
         String masterUsers = "";
@@ -412,19 +450,19 @@ public class MessageListener extends ListenerAdapter {
             Double userRank = userInfo.getRank();
             if (userRank != 0.0) {
 
-                if (userRank >= RANK.GRANDMASTER.getValue())
+                if (userRank >= grandMaster.getRoleValue())
                     grandMasterUsers += userInfo.getUserName() + " - " + String.format("%.2f", userRank) + "\n";
-                else if (userRank >= RANK.MASTER.getValue())
+                else if (userRank >= master.getRoleValue())
                     masterUsers += userInfo.getUserName() + " - " + String.format("%.2f", userRank) + "\n";
-                else if (userRank >= RANK.DIAMOND.getValue())
+                else if (userRank >= diamond.getRoleValue())
                     diamondUsers += userInfo.getUserName() + " - " + String.format("%.2f", userRank) + "\n";
-                else if (userRank >= RANK.PLATINUM.getValue())
+                else if (userRank >= platinum.getRoleValue())
                     platinumUsers += userInfo.getUserName() + " - " + String.format("%.2f", userRank) + "\n";
-                else if (userRank >= RANK.GOLD.getValue())
+                else if (userRank >= gold.getRoleValue())
                     goldUsers += userInfo.getUserName() + " - " + String.format("%.2f", userRank) + "\n";
-                else if (userRank >= RANK.SILVER.getValue())
+                else if (userRank >= silver.getRoleValue())
                     silverUsers += userInfo.getUserName() + " - " + String.format("%.2f", userRank) + "\n";
-                else if (userRank >= RANK.BRONZE.getValue())
+                else if (userRank >= bronze.getRoleValue())
                     bronzeUsers += userInfo.getUserName() + " - " + String.format("%.2f", userRank) + "\n";
 
             }
@@ -439,10 +477,17 @@ public class MessageListener extends ListenerAdapter {
         silverUsers = (silverUsers.isBlank() || silverUsers.isEmpty()) ? "" : "```" + silverUsers + "```";
         bronzeUsers = (bronzeUsers.isBlank() || bronzeUsers.isEmpty()) ? "" : "```" + bronzeUsers + "```";
 
+        String seasonEmbedTitle = null;
+        if (currentSeason.equalsIgnoreCase("season_1")) {
+            seasonEmbedTitle = "Season 1";
+        } else if (currentSeason.equalsIgnoreCase("season_2")) {
+            seasonEmbedTitle = "Season 2";
+        }
+
         EmbedBuilder eb = new EmbedBuilder();
 
         eb.setColor(Color.GREEN);
-        eb.setTitle("Season 1 Ranks");
+        eb.setTitle(seasonEmbedTitle + " Ranks");
         eb.addField(grandMasterTitle, grandMasterUsers, false);
         eb.addField(masterTitle, masterUsers, false);
         eb.addField(diamondTitle, diamondUsers, false);
@@ -460,38 +505,74 @@ public class MessageListener extends ListenerAdapter {
 
     private void sendRoleInfoMessage(MessageReceivedEvent event, Boolean isPrivate) {
 
-        String roleInfoMessage = "```\n" +
-                "What is all this role business?\n" +
-                " - This server has 7 roles and they are Bronze, Silver, Gold, Platinum, Diamond, Master, & GrandMaster\n" +
-                "\n" +
-                "How do I get these roles?\n" +
-                " - Simple, just be in the voice channel to get points.\n" +
-                "\n" +
-                "How many points do I get?\n" +
-                " - 1 point every 10 minutes.\n" +
-                " - Server Boosters get a 1.10x multiplier.\n" +
-                " - If there are 6-7 people in a single channel, everyone in that channel gets a 1.50x multiplier.\n" +
-                " - If there are 8+ people in a single channel, everyone in that channel gets a 2.00x multiplier.\n" +
-                " **Server Booster and Channel Members multiplier do stack.**\n" +
-                "\n" +
-                "Can I just AFK?\n" +
-                " - Nope. There has to be 2 or more people in the channel.\n" +
-                "\n" +
-                "Does the bot count as a person?\n" +
-                " - Nope. We fixed that ;)\n" +
-                "\n" +
-                "How many points do I need to get to the next role?\n" +
-                " - Bronze = 0\n" +
-                " - Silver = 100\n" +
-                " - Gold = 200\n" +
-                " - Platinum = 500\n" +
-                " - Diamond = 1250\n" +
-                " - Master = 2000\n" +
-                " - GrandMaster = 3500\n" +
-                "\n" +
-                "Anything else I should know?\n" +
-                " - Yeah, there is actually role decay as well. Which starts after 7 days of not joining a channel and each role has different decay values. You can also never decay out of Silver.\n" +
-                "```";
+        String roleInfoMessage = null;
+
+        var currentSeason = seasonInfoRepository.findById("current_season").stream().findFirst().get().getValue();
+        if (currentSeason.equalsIgnoreCase("season_1")) {
+
+            roleInfoMessage = "```\n" +
+                    "Season 1 Info:\n\n" +
+                    "What is all this role business?\n" +
+                    " - This server has 7 roles and they are Bronze, Silver, Gold, Platinum, Diamond, Master, & GrandMaster\n" +
+                    "\n" +
+                    "How do I get these roles?\n" +
+                    " - Simple, just be in the voice channel to get points.\n" +
+                    "\n" +
+                    "How many points do I get?\n" +
+                    " - 1 point every 10 minutes.\n" +
+                    " - Server Boosters get a 1.10x multiplier.\n" +
+                    " - If there are 8+ people in a single channel, everyone in that channel gets a 2.00x multiplier.\n" +
+                    " **Server Booster and Channel Members multiplier do stack.**\n" +
+                    "\n" +
+                    "Can I just AFK?\n" +
+                    " - Nope. There has to be 2 or more people in the channel.\n" +
+                    "\n" +
+                    "Does the bot count as a person?\n" +
+                    " - Nope. We fixed that ;)\n" +
+                    "\n" +
+                    "How many points do I need to get to the next role?\n" +
+                    " - Bronze = 0\n" +
+                    " - Silver = 100\n" +
+                    " - Gold = 200\n" +
+                    " - Platinum = 500\n" +
+                    " - Diamond = 1250\n" +
+                    " - Master = 2000\n" +
+                    " - GrandMaster = 3500\n" +
+                    "```";
+
+        } else if (currentSeason.equalsIgnoreCase("season_2")) {
+
+            roleInfoMessage = "```\n" +
+                    "Season 2 Info:\n\n" +
+                    "What is all this role business?\n" +
+                    " - This server has 7 roles and they are Bronze, Silver, Gold, Platinum, Diamond, Master, & GrandMaster\n" +
+                    "\n" +
+                    "How do I get these roles?\n" +
+                    " - Simple, just be in the voice channel to get points.\n" +
+                    "\n" +
+                    "How many points do I get?\n" +
+                    " - 1 point every 10 minutes.\n" +
+                    " - Server Boosters get a 1.10x multiplier.\n" +
+                    " - If there are 8+ people in a single channel, everyone in that channel gets a 2.00x multiplier.\n" +
+                    " **Server Booster and Channel Members multiplier do stack.**\n" +
+                    "\n" +
+                    "Can I just AFK?\n" +
+                    " - Nope. There has to be 2 or more people in the channel.\n" +
+                    "\n" +
+                    "Does the bot count as a person?\n" +
+                    " - Nope. We fixed that ;)\n" +
+                    "\n" +
+                    "How many points do I need to get to the next role?\n" +
+                    " - Bronze = 0\n" +
+                    " - Silver = 3\n" +
+                    " - Gold = 30\n" +
+                    " - Platinum = 100\n" +
+                    " - Diamond = 750\n" +
+                    " - Master = 2250\n" +
+                    " - GrandMaster = 6000\n" +
+                    "```";
+
+        }
 
         if (isPrivate)
             event.getPrivateChannel().sendMessage(roleInfoMessage).queue();
@@ -512,7 +593,7 @@ public class MessageListener extends ListenerAdapter {
 
                     userInfoRepository.findById(author.getIdLong()).ifPresent(userInfo -> {
 
-                        RANK currentUserRank = userRankService.calculateRoleByRank(userInfo.getRank());
+                        SeasonRole currentUserRank = userRankService.calculateRoleByRank(userInfo.getRank());
                         List<Role> roles = event.getGuild().getRolesByName(currentUserRank.getRoleName(), false);
 
                         if (!roles.isEmpty()) {
@@ -564,12 +645,10 @@ public class MessageListener extends ListenerAdapter {
 
             String helpMessage = "Incorrect command. Use one of the following:\n" +
                     "```!create commandName\n" +
+                    "!update commandName\n" +
+                    "!delete commandName\n" +
                     "ex: !create widePeppoHappy```";
-//            String helpMessage = "Incorrect command. Use one of the following:\n" +
-//                    "```!create commandName\n" +
-//                    "!update commandName\n" +
-//                    "!delete commandName\n" +
-//                    "ex: !create widePeppoHappy```";
+
             channel.sendMessage(helpMessage).queue(sentMessage -> {
                 CompletableFuture.delayedExecutor(10, TimeUnit.SECONDS).execute(() -> {
                     sentMessage.delete().queue();
@@ -1134,6 +1213,129 @@ public class MessageListener extends ListenerAdapter {
 
         if (!audioManager.isConnected() && !audioManager.isAttemptingToConnect()) {
             audioManager.openAudioConnection(voiceChannel);
+        }
+
+    }
+
+    public void startSeason2(MessageReceivedEvent event) {
+
+        log.info("Starting Season 2");
+
+        var guild = event.getGuild();
+        var commandTimestamp = new Timestamp(System.currentTimeMillis());
+
+        // Check to make sure that the current Season is Season 1
+        var currentSeason = seasonInfoRepository.findById("current_season").stream().findFirst().get();
+        if (!currentSeason.getValue().equalsIgnoreCase("season_1")) {
+            log.info("Can't start Season 2 if it is not Season 1");
+        } else {
+
+            // Create Legacy Roles and Assign to Guild Members
+            List<SeasonRole> seasonRoleList = seasonRolesRepository.findAllBySeason("season_1").stream().sorted(Comparator.comparingInt(SeasonRole::getRoleOrder)).collect(Collectors.toList());
+
+            List<Role> guildRoles = null;
+            seasonRoleList.forEach(seasonRole -> {
+                var guildRole = guild.getRolesByName(seasonRole.getRoleName(), false).stream().findFirst();
+                if (guildRole.isPresent())
+                    guildRoles.add(guildRole.get());
+            });
+
+            guildRoles.forEach(role -> {
+                var roleName = role.getName();
+                var roleColor = role.getColor();
+                var roleId = role.getIdLong();
+
+                AtomicReference<Role> legacyRole = null;
+
+                log.info("Season 1 Role Name: {}, Role Color: {}, Role Id: {}", roleName, roleColor, roleId);
+                guild.createRole().setName(String.format("S1_%s", roleName)).setColor(roleColor).queue(createdRole -> {
+                    legacyRole.set(createdRole);
+                    log.info("Created Legacy Role: {}", legacyRole.get().getName());
+                });
+
+                guild.getMembersWithRoles(role).forEach(member -> {
+                    log.info("Setting Legacy Role {} to Member {}", legacyRole.get().getName(), member.getEffectiveName());
+                    guild.addRoleToMember(member.getIdLong(), legacyRole.get()).queue();
+                });
+            });
+
+            // Change to Season 2
+            currentSeason.setValue("season_2");
+            seasonInfoRepository.save(currentSeason);
+
+            // Archive all Season 1 User Rank Details
+            userInfoRepository.findAll().forEach(userInfo -> {
+
+                SeasonArchive newArchive = new SeasonArchive();
+                newArchive.setSeason("season_1");
+                newArchive.setUserId(userInfo.getUserId());
+                newArchive.setUserName(userInfo.getUserName());
+                newArchive.setRank(userInfo.getRank());
+
+                seasonArchiveRepository.save(newArchive);
+
+            });
+
+            // Reset USER_INFO Details
+            List<UserInfo> updatedUserInfoList = null;
+
+            userInfoRepository.findAll().forEach(userInfo -> {
+
+                var bronzeRankValue = seasonRolesRepository.findAllBySeason("season_2").stream().filter(s -> s.getRoleName() == "Bronze").findFirst().get().getRoleValue();
+                var silverRankValue = seasonRolesRepository.findAllBySeason("season_2").stream().filter(s -> s.getRoleName() == "Silver").findFirst().get().getRoleValue();
+
+                // Start Users out in Silver if at least Silver in Previous Season
+                if (userInfo.getRank() >= silverRankValue) {
+                    userInfo.setRank(silverRankValue);
+                } else {
+                    userInfo.setRank(bronzeRankValue);
+                }
+
+                // Reset the User Joined Timestamp
+                if (userInfo.getActive()) {
+                    // Set Timestamp to Current Time and Leave Active
+                    userInfo.setJoinedChannelTm(commandTimestamp);
+                } else {
+                    // Set Timestamp to Null and Leave In-Active
+                    userInfo.setJoinedChannelTm(null);
+                }
+
+                updatedUserInfoList.add(userInfo);
+
+            });
+
+            userInfoRepository.saveAll(updatedUserInfoList);
+
+            // Send Season 2 Message to General Channel
+            var season2Message = "```\n" +
+                    "Season 2 is here!\n" +
+                    "With Season 2 we are resetting the Ranks and rebalancing them based on the Season 1 data.\n" +
+                    "\n" +
+                    "What Rank do we start at?\n" +
+                    " - If you made it to Silver last Season then you will start as Silver in Season 2.\n" +
+                    " - If you didn't get to Silver then you will start back as Bronze.\n" +
+                    "\n" +
+                    "Season 2 Updated Ranks:\n" +
+                    " - Bronze = 0\n" +
+                    " - Silver = 3\n" +
+                    " - Gold = 30\n" +
+                    " - Platinum = 100\n" +
+                    " - Diamond = 750\n" +
+                    " - Master = 2250\n" +
+                    " - GrandMaster = 6000\n" +
+                    "\n" +
+                    "Why are the lower Ranks so low?\n" +
+                    " - Looking at the data from Season 1, we had a lot of people that never got out of Bronze." +
+                    " We want to make these lower Ranks easier to achieve and while also increasing the difficulty a bit for the higher Ranks." +
+                    " These changes should help to have a more distributed base per Rank.\n" +
+                    "\n" +
+                    "What happens with my Season 1 Rank?\n" +
+                    " - Season 1 is over and the Rank that you achieved is important. We have created Legacy Season Roles! Take a look at your profile to see yours.\n" +
+                    "```";
+
+
+            guild.getDefaultChannel().sendMessage(season2Message).queue(s -> log.info("Season 2 Message Sent to Guild Default Channel"));
+
         }
 
     }

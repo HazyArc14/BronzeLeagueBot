@@ -1,9 +1,10 @@
 package com.hazyarc14.service;
 
-import com.hazyarc14.enums.RANK;
+import com.hazyarc14.model.SeasonRole;
 import com.hazyarc14.model.UserInfo;
+import com.hazyarc14.repository.SeasonInfoRepository;
+import com.hazyarc14.repository.SeasonRolesRepository;
 import com.hazyarc14.repository.UserInfoRepository;
-import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
@@ -12,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.awt.*;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,10 +30,23 @@ public class UserRankService {
     public static final Double minsPerPointEarned = 10.0;
     public static final Double serverBoosterBonus = 1.10;
 
-    private static final List<String> guildRoleNames = Arrays.asList("Bronze", "Silver", "Gold", "Platinum", "Diamond", "Master", "GrandMaster");
+    private static final List<String> guildRoleNames = Arrays.asList(
+            "Bronze",
+            "Silver",
+            "Gold",
+            "Platinum",
+            "Diamond",
+            "Master",
+            "GrandMaster");
 
     @Autowired
     UserInfoRepository userInfoRepository;
+
+    @Autowired
+    SeasonInfoRepository seasonInfoRepository;
+
+    @Autowired
+    SeasonRolesRepository seasonRolesRepository;
 
     public void createUserRank(Member member) {
 
@@ -105,7 +118,7 @@ public class UserRankService {
         List<Role> memberRoles = member.getRoles();
         List<Role> newMemberRoles = new ArrayList<>();
 
-        RANK currentUserRank = calculateRoleByRank(userInfo.getRank());
+        SeasonRole currentUserRank = calculateRoleByRank(userInfo.getRank());
         List<Role> roles = guild.getRolesByName(currentUserRank.getRoleName(), false);
 
         if (!roles.isEmpty()) {
@@ -141,7 +154,7 @@ public class UserRankService {
             List<Role> memberRoles = member.getRoles();
             List<Role> newMemberRoles = new ArrayList<>();
 
-            RANK currentUserRank = calculateRoleByRank(userRank.getRank());
+            SeasonRole currentUserRank = calculateRoleByRank(userRank.getRank());
             Role newGuildRole = guild.getRolesByName(currentUserRank.getRoleName(), false).get(0);
 
             for (int i = 0; i < memberRoles.size(); i++) {
@@ -179,92 +192,43 @@ public class UserRankService {
 
     }
 
-    public void applyDecayToUserRanks(JDA jda) {
+    public SeasonRole calculateRoleByRank(Double rank) {
 
-        Guild guild = jda.getGuildById(93106003628806144L);
+        var currentSeason = seasonInfoRepository.findById("current_season").stream().findFirst().get().getValue();
+        var seasonRoles = seasonRolesRepository.findAllBySeason(currentSeason);
 
-        List<UserInfo> userInfoList = userInfoRepository.findAll();
-        Timestamp currentTm = new Timestamp(System.currentTimeMillis());
+        SeasonRole role = null;
 
-        userInfoList.forEach(userRank -> {
+        SeasonRole bronze = seasonRoles.stream().filter(s -> s.getRoleName() == "Bronze").findFirst().get();
+        SeasonRole silver = seasonRoles.stream().filter(s -> s.getRoleName() == "Silver").findFirst().get();
+        SeasonRole gold = seasonRoles.stream().filter(s -> s.getRoleName() == "Gold").findFirst().get();
+        SeasonRole platinum = seasonRoles.stream().filter(s -> s.getRoleName() == "Platinum").findFirst().get();
+        SeasonRole diamond = seasonRoles.stream().filter(s -> s.getRoleName() == "Diamond").findFirst().get();
+        SeasonRole master = seasonRoles.stream().filter(s -> s.getRoleName() == "Master").findFirst().get();
+        SeasonRole grandMaster = seasonRoles.stream().filter(s -> s.getRoleName() == "GrandMaster").findFirst().get();
 
-            Double currentRank = userRank.getRank();
-            Timestamp joinedTm = userRank.getJoinedChannelTm();
+        if (rank < silver.getRoleValue()) {
+            role = bronze;
+        } else if (rank >= silver.getRoleValue() && rank < gold.getRoleValue()) {
+            role = silver;
+        } else if (rank >= gold.getRoleValue() && rank < platinum.getRoleValue()) {
+            role = gold;
+        } else if (rank >= platinum.getRoleValue() && rank < diamond.getRoleValue()) {
+            role = platinum;
+        } else if (rank >= diamond.getRoleValue() && rank < master.getRoleValue()) {
+            role = diamond;
+        } else if (rank >= master.getRoleValue() && rank < grandMaster.getRoleValue()) {
+            role = master;
+        } else if (rank >= grandMaster.getRoleValue()) {
+            role = grandMaster;
+        }
 
-            if (joinedTm != null && !userRank.getActive()) {
-
-                Long temp = TimeUnit.DAYS.convert(currentTm.getTime() - joinedTm.getTime(), TimeUnit.MILLISECONDS);
-                Integer daySinceChannelJoined = temp.intValue();
-
-                if (daySinceChannelJoined > 7) {
-
-                    Double pointsToRemove = calculateDecayValue(currentRank);
-
-                    userRank.setRank(currentRank - pointsToRemove);
-                    userInfoRepository.save(userRank);
-
-                }
-
-            }
-
-        });
-
-        updateAllUserRoles(guild);
-
-    }
-
-    public Double calculateDecayValue(Double rank) {
-
-        if (rank < RANK.SILVER.getValue())
-            return 0.0;
-
-        if (rank >= RANK.SILVER.getValue() && rank < RANK.GOLD.getValue())
-            return 1.0;
-
-        if (rank >= RANK.GOLD.getValue() && rank < RANK.PLATINUM.getValue())
-            return 5.0;
-
-        if (rank >= RANK.PLATINUM.getValue() && rank < RANK.DIAMOND.getValue())
-            return 10.0;
-
-        if (rank >= RANK.DIAMOND.getValue() && rank < RANK.MASTER.getValue())
-            return 15.0;
-
-        if (rank >= RANK.MASTER.getValue() && rank < RANK.GRANDMASTER.getValue())
-            return 20.0;
-
-        if (rank >= RANK.GRANDMASTER.getValue())
-            return 30.0;
-
-        return 0.0;
+        return role;
 
     }
 
-    public RANK calculateRoleByRank(Double rank) {
-
-        if (rank < RANK.SILVER.getValue())
-            return RANK.BRONZE;
-
-        if (rank >= RANK.SILVER.getValue() && rank < RANK.GOLD.getValue())
-            return RANK.SILVER;
-
-        if (rank >= RANK.GOLD.getValue() && rank < RANK.PLATINUM.getValue())
-            return RANK.GOLD;
-
-        if (rank >= RANK.PLATINUM.getValue() && rank < RANK.DIAMOND.getValue())
-            return RANK.PLATINUM;
-
-        if (rank >= RANK.DIAMOND.getValue() && rank < RANK.MASTER.getValue())
-            return RANK.DIAMOND;
-
-        if (rank >= RANK.MASTER.getValue() && rank < RANK.GRANDMASTER.getValue())
-            return RANK.MASTER;
-
-        if (rank >= RANK.GRANDMASTER.getValue())
-            return RANK.GRANDMASTER;
-
-        return null;
-
+    public SeasonRole nextSeasonRole(SeasonRole seasonRole) {
+        return seasonRolesRepository.findAllBySeasonAndRoleOrder(seasonRole.getSeason(), seasonRole.getRoleOrder() + 1).stream().findFirst().get();
     }
 
 }

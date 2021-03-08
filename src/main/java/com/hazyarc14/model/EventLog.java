@@ -1,9 +1,12 @@
 package com.hazyarc14.model;
 
+import lombok.Data;
+
 import javax.persistence.*;
 import java.sql.Timestamp;
 
 @Entity
+@Data
 @Table(name = "event_log")
 public class EventLog {
 
@@ -39,55 +42,6 @@ public class EventLog {
         this.tm = event.tm;
         this.message = event.message;
         this.rank = event.rank;
-    }
-
-    public Long getOid() {
-        return oid;
-    }
-    public void setOid(Long oid) {
-        this.oid = oid;
-    }
-
-    public String getType() {
-        return type;
-    }
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public Timestamp getTm() {
-        return tm;
-    }
-    public void setTm(Timestamp tm) {
-        this.tm = tm;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public Double getRank() {
-        return this.rank;
-    }
-    public void setRank(Double rank) {
-        this.rank = rank;
     }
 
 }
