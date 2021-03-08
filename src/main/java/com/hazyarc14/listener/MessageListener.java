@@ -117,7 +117,7 @@ public class MessageListener extends ListenerAdapter {
 
                 sendHelpMessage(event, isPrivate);
 
-            } else if (commandList[0].equalsIgnoreCase("!startSeason2")) {
+            } else if (commandList[0].equalsIgnoreCase("!startSeason2") && (event.getAuthor().getIdLong() == 148630426548699136L || event.getAuthor().getIdLong() == 93140127949287424L)) {
 
                 if (isPrivate) {
                     event.getPrivateChannel().sendMessage("Not able to use this command in Direct Messages").queue();
