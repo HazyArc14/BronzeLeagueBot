@@ -197,15 +197,17 @@ public class UserRankService {
         var currentSeason = seasonInfoRepository.findById("current_season").stream().findFirst().get().getValue();
         var seasonRoles = seasonRolesRepository.findAllBySeason(currentSeason);
 
+        log.info("Season Roles Size: {}", seasonRoles.size());
+
         SeasonRole role = null;
 
-        SeasonRole bronze = seasonRoles.stream().filter(s -> s.getRoleName() == "Bronze").findFirst().get();
-        SeasonRole silver = seasonRoles.stream().filter(s -> s.getRoleName() == "Silver").findFirst().get();
-        SeasonRole gold = seasonRoles.stream().filter(s -> s.getRoleName() == "Gold").findFirst().get();
-        SeasonRole platinum = seasonRoles.stream().filter(s -> s.getRoleName() == "Platinum").findFirst().get();
-        SeasonRole diamond = seasonRoles.stream().filter(s -> s.getRoleName() == "Diamond").findFirst().get();
-        SeasonRole master = seasonRoles.stream().filter(s -> s.getRoleName() == "Master").findFirst().get();
-        SeasonRole grandMaster = seasonRoles.stream().filter(s -> s.getRoleName() == "GrandMaster").findFirst().get();
+        SeasonRole bronze = seasonRoles.stream().filter(s -> s.getRoleName().equalsIgnoreCase("Bronze")).findFirst().get();
+        SeasonRole silver = seasonRoles.stream().filter(s -> s.getRoleName().equalsIgnoreCase("Silver")).findFirst().get();
+        SeasonRole gold = seasonRoles.stream().filter(s -> s.getRoleName().equalsIgnoreCase("Gold")).findFirst().get();
+        SeasonRole platinum = seasonRoles.stream().filter(s -> s.getRoleName().equalsIgnoreCase("Platinum")).findFirst().get();
+        SeasonRole diamond = seasonRoles.stream().filter(s -> s.getRoleName().equalsIgnoreCase("Diamond")).findFirst().get();
+        SeasonRole master = seasonRoles.stream().filter(s -> s.getRoleName().equalsIgnoreCase("Master")).findFirst().get();
+        SeasonRole grandMaster = seasonRoles.stream().filter(s -> s.getRoleName().equalsIgnoreCase("GrandMaster")).findFirst().get();
 
         if (rank < silver.getRoleValue()) {
             role = bronze;
