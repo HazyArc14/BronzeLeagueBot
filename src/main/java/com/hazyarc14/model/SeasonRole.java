@@ -6,11 +6,12 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.io.Serializable;
 
 @Entity
 @Data
 @Table(name = "season_roles")
-public class SeasonRole {
+public class SeasonRole implements Serializable {
 
     @Id
     @Column(name = "season")
