@@ -2,16 +2,14 @@ package com.hazyarc14.model;
 
 import lombok.Data;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
 @Data
+@IdClass(SeasonRoleId.class)
 @Table(name = "season_roles")
-public class SeasonRole implements Serializable {
+public class SeasonRole {
 
     @Id
     @Column(name = "season")
