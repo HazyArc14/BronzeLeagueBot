@@ -2,6 +2,7 @@ package com.hazyarc14;
 
 import com.hazyarc14.listener.ChannelListener;
 import com.hazyarc14.listener.MessageListener;
+import com.hazyarc14.service.UserRankService;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import javax.annotation.PostConstruct;
 import javax.security.auth.login.LoginException;
@@ -23,6 +25,9 @@ public class BronzeLeagueBotApplication {
 
 	@Autowired
 	ChannelListener channelListener;
+
+	@Autowired
+	UserRankService userRankService;
 
 	public JDA jda;
 
@@ -40,5 +45,11 @@ public class BronzeLeagueBotApplication {
 				.addEventListeners(messageListener, channelListener).build();
 
 	}
+
+	@Scheduled(fixedDelay = 60000)
+	public void updateUserRanks() {
+		userRankService.updateAllUserRanks(this.jda);
+	}
+
 
 }
