@@ -1246,7 +1246,7 @@ public class MessageListener extends ListenerAdapter {
                     " - Master = 2250\n" +
                     " - GrandMaster = 6000\n" +
                     "\n" +
-                    "**Why are the lower Ranks so low?**\n" +
+                    "**Why did the Ranks change?**\n" +
                     " - Looking at the data from Season 1, we had a lot of people that never got out of Bronze." +
                     " We want to make these lower Ranks easier to achieve and while also increasing the difficulty a bit for the higher Ranks." +
                     " These changes should help to have a more distributed base per Rank.\n" +
@@ -1328,9 +1328,14 @@ public class MessageListener extends ListenerAdapter {
             userInfoRepository.findAll().forEach(userInfo -> {
 
                 var season1SilverRankValue = seasonRolesRepository.findAllBySeason("season_1").stream().filter(s -> s.getRoleName().equalsIgnoreCase("Silver")).findFirst().get().getRoleValue();
+                var season1PlatinumRankValue = seasonRolesRepository.findAllBySeason("season_1").stream().filter(s -> s.getRoleName().equalsIgnoreCase("Platinum")).findFirst().get().getRoleValue();
 
                 var season2BronzeRankValue = seasonRolesRepository.findAllBySeason("season_2").stream().filter(s -> s.getRoleName().equalsIgnoreCase("Bronze")).findFirst().get().getRoleValue();
                 var season2SilverRankValue = seasonRolesRepository.findAllBySeason("season_2").stream().filter(s -> s.getRoleName().equalsIgnoreCase("Silver")).findFirst().get().getRoleValue();
+
+                var sendPrivateMessage = false;
+                if (userInfo.getRank() >= season1PlatinumRankValue)
+                    sendPrivateMessage = true;
 
                 // Start Users out in Silver if at least Silver in Previous Season
                 if (userInfo.getRank() >= season1SilverRankValue) {
@@ -1381,6 +1386,11 @@ public class MessageListener extends ListenerAdapter {
                 log.info("New Roles {}", addMemberRoles.toString());
                 log.info("Remove Roles {}", removeMemberRoles.toString());
                 guild.modifyMemberRoles(member, addMemberRoles, removeMemberRoles).queue();
+
+                if (sendPrivateMessage)
+                    member.getUser().openPrivateChannel().queue(privateChannel -> {
+                        privateChannel.sendMessage(" ").setEmbeds(eb.build()).queue(s -> log.info("Season 2 Message Sent to {}", member.getEffectiveName()));
+                    });
 
             });
 
