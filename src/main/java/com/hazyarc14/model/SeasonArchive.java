@@ -8,7 +8,7 @@ import java.io.Serializable;
 @Entity
 @Data
 @IdClass(SeasonArchiveId.class)
-@Table(name = "season_1_archive")
+@Table(name = "season_archive")
 public class SeasonArchive {
 
     @Id
