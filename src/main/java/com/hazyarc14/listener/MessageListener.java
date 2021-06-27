@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Service
@@ -117,7 +116,7 @@ public class MessageListener extends ListenerAdapter {
 
                 sendHelpMessage(event, isPrivate);
 
-            } else if (commandList[0].equalsIgnoreCase("!startSeason2") && (event.getAuthor().getIdLong() == 148630426548699136L || event.getAuthor().getIdLong() == 93140127949287424L)) {
+            } else if (commandList[0].equalsIgnoreCase("!startSeason2") && (event.getAuthor().getIdLong() == 148630426548699136L)) {
 
                 if (isPrivate) {
                     event.getPrivateChannel().sendMessage("Not able to use this command in Direct Messages").queue();
@@ -400,9 +399,9 @@ public class MessageListener extends ListenerAdapter {
                 eb.setAuthor(userInfo.getUserName(), null, targetMember.getUser().getAvatarUrl());
 
                 if (isPrivate) {
-                    event.getPrivateChannel().sendMessage("Current Role & Rank").embed(eb.build()).queue();
+                    event.getPrivateChannel().sendMessage("Current Role & Rank").setEmbeds(eb.build()).queue();
                 } else {
-                    event.getChannel().sendMessage("Current Role & Rank").embed(eb.build()).queue(sentMessage -> {
+                    event.getChannel().sendMessage("Current Role & Rank").setEmbeds(eb.build()).queue(sentMessage -> {
                         CompletableFuture.delayedExecutor(10, TimeUnit.SECONDS).execute(() -> {
                             sentMessage.delete().queue();
                         });
@@ -497,9 +496,9 @@ public class MessageListener extends ListenerAdapter {
         eb.addField(bronzeTitle, bronzeUsers, false);
 
         if (isPrivate)
-            event.getPrivateChannel().sendMessage("⠀").embed(eb.build()).queue();
+            event.getPrivateChannel().sendMessage("⠀").setEmbeds(eb.build()).queue();
         else
-            event.getChannel().sendMessage("⠀").embed(eb.build()).queue();
+            event.getChannel().sendMessage("⠀").setEmbeds(eb.build()).queue();
 
     }
 
@@ -606,7 +605,7 @@ public class MessageListener extends ListenerAdapter {
                             eb.setAuthor(author.getName(), null, author.getAvatarUrl());
                             eb.setImage("attachment://" + command.getCommandName() + "." + command.getCommandFileExtension());
 
-                            event.getChannel().sendFile(command.getCommandFile(), command.getCommandName() + "." + command.getCommandFileExtension()).embed(eb.build()).queue();
+                            event.getChannel().sendFile(command.getCommandFile(), command.getCommandName() + "." + command.getCommandFileExtension()).setEmbeds(eb.build()).queue();
 
                         }
 
@@ -750,7 +749,7 @@ public class MessageListener extends ListenerAdapter {
                             if (!commandSuggestion.getCommandFileExtension().equalsIgnoreCase("mp3"))
                                 eb.setImage("attachment://" + commandSuggestion.getCommandName() + "." + commandSuggestion.getCommandFileExtension());
 
-                            event.getChannel().sendFile(commandSuggestion.getCommandFile(), commandSuggestion.getCommandName() + "." + commandSuggestion.getCommandFileExtension()).embed(eb.build()).queue();
+                            event.getChannel().sendFile(commandSuggestion.getCommandFile(), commandSuggestion.getCommandName() + "." + commandSuggestion.getCommandFileExtension()).setEmbeds(eb.build()).queue();
 
                         } else {
 
@@ -767,7 +766,7 @@ public class MessageListener extends ListenerAdapter {
                                 eb.setImage("attachment://" + commandSuggestion.getCommandName() + "." + commandSuggestion.getCommandFileExtension());
                             }
 
-                            channel.sendFile(commandSuggestion.getCommandFile(), commandSuggestion.getCommandName() + "." + commandSuggestion.getCommandFileExtension()).embed(eb.build()).queue(sentMessage -> {
+                            channel.sendFile(commandSuggestion.getCommandFile(), commandSuggestion.getCommandName() + "." + commandSuggestion.getCommandFileExtension()).setEmbeds(eb.build()).queue(sentMessage -> {
                                 sentMessage.addReaction(reactionNoVote).queue();
                                 sentMessage.addReaction(reactionYesVote).queue();
                                 commandRepository.save(commandSuggestion);
@@ -868,7 +867,7 @@ public class MessageListener extends ListenerAdapter {
                                     if (!commandSuggestion.getCommandFileExtension().equalsIgnoreCase("mp3"))
                                         eb.setImage("attachment://" + commandSuggestion.getCommandName() + "." + commandSuggestion.getCommandFileExtension());
 
-                                    event.getChannel().sendFile(commandSuggestion.getCommandFile(), commandSuggestion.getCommandName() + "." + commandSuggestion.getCommandFileExtension()).embed(eb.build()).queue();
+                                    event.getChannel().sendFile(commandSuggestion.getCommandFile(), commandSuggestion.getCommandName() + "." + commandSuggestion.getCommandFileExtension()).setEmbeds(eb.build()).queue();
 
                                 } else {
 
@@ -885,7 +884,7 @@ public class MessageListener extends ListenerAdapter {
                                         eb.setImage("attachment://" + commandSuggestion.getCommandName() + "." + commandSuggestion.getCommandFileExtension());
                                     }
 
-                                    channel.sendFile(commandSuggestion.getCommandFile(), commandSuggestion.getCommandName() + "." + commandSuggestion.getCommandFileExtension()).embed(eb.build()).queue(sentMessage -> {
+                                    channel.sendFile(commandSuggestion.getCommandFile(), commandSuggestion.getCommandName() + "." + commandSuggestion.getCommandFileExtension()).setEmbeds(eb.build()).queue(sentMessage -> {
                                         sentMessage.addReaction(reactionNoVote).queue();
                                         sentMessage.addReaction(reactionYesVote).queue();
                                         commandRepository.save(commandSuggestion);
@@ -963,7 +962,7 @@ public class MessageListener extends ListenerAdapter {
                             eb.setImage("attachment://" + command.getCommandName() + "." + command.getCommandFileExtension());
                         }
 
-                        channel.sendFile(command.getCommandFile(), command.getCommandName() + "." + command.getCommandFileExtension()).embed(eb.build()).queue(sentMessage -> {
+                        channel.sendFile(command.getCommandFile(), command.getCommandName() + "." + command.getCommandFileExtension()).setEmbeds(eb.build()).queue(sentMessage -> {
                             sentMessage.addReaction(reactionNoVote).queue();
                             sentMessage.addReaction(reactionYesVote).queue();
                         });
@@ -1112,7 +1111,7 @@ public class MessageListener extends ListenerAdapter {
                     if (!command.getCommandFileExtension().equalsIgnoreCase("mp3"))
                         eb.setImage("attachment://" + command.getCommandName() + "." + command.getCommandFileExtension());
 
-                    event.getChannel().sendFile(command.getCommandFile(), command.getCommandName() + "." + command.getCommandFileExtension()).embed(eb.build()).queue();
+                    event.getChannel().sendFile(command.getCommandFile(), command.getCommandName() + "." + command.getCommandFileExtension()).setEmbeds(eb.build()).queue();
 
                     message.delete().queue();
 
@@ -1211,7 +1210,7 @@ public class MessageListener extends ListenerAdapter {
 
     public static void connectVoiceChannel(AudioManager audioManager, VoiceChannel voiceChannel) {
 
-        if (!audioManager.isConnected() && !audioManager.isAttemptingToConnect()) {
+        if (!audioManager.isConnected()) {
             audioManager.openAudioConnection(voiceChannel);
         }
 
@@ -1230,34 +1229,80 @@ public class MessageListener extends ListenerAdapter {
             log.info("Can't start Season 2 if it is not Season 1");
         } else {
 
-            // Create Legacy Roles and Assign to Guild Members
-            List<SeasonRole> seasonRoleList = seasonRolesRepository.findAllBySeason("season_1").stream().sorted(Comparator.comparingInt(SeasonRole::getRoleOrder)).collect(Collectors.toList());
+            // Send Season 2 Message to General Channel
+            var ebDescription =
+                    "**With Season 2 we are resetting the Ranks and rebalancing them based on the Season 1 data.**\n" +
+                    "\n" +
+                    "**What Rank do we start at?**\n" +
+                    " - If you made it to Silver last Season then you will start as Silver in Season 2.\n" +
+                    " - If you didn't get to Silver then you will start back as Bronze.\n" +
+                    "\n" +
+                    "**What are the new Rank values?**\n" +
+                    " - Bronze = 0\n" +
+                    " - Silver = 3\n" +
+                    " - Gold = 30\n" +
+                    " - Platinum = 100\n" +
+                    " - Diamond = 750\n" +
+                    " - Master = 2250\n" +
+                    " - GrandMaster = 6000\n" +
+                    "\n" +
+                    "**Why are the lower Ranks so low?**\n" +
+                    " - Looking at the data from Season 1, we had a lot of people that never got out of Bronze." +
+                    " We want to make these lower Ranks easier to achieve and while also increasing the difficulty a bit for the higher Ranks." +
+                    " These changes should help to have a more distributed base per Rank.\n" +
+                    "\n" +
+                    "**What happens with my Season 1 Rank?**\n" +
+                    " - Season 1 is over and the Rank that you achieved is important. We have created Legacy Season Roles! Take a look at your profile to see yours.\n" +
+                    "\n" +
+                    "**How long will Season 2 last?**\n" +
+                    " - Season 2's Ranks are based around the Season lasting a year. If the Season is shortened the Rank values will be adjusted accordingly.\n" +
+                    "\n" +
+                    "\n" +
+                    "**Do you have what it takes to reach GrandMaster?**";
 
-            List<Role> guildRoles = null;
+            EmbedBuilder eb = new EmbedBuilder();
+
+            eb.setColor(new Color(0, 255, 255));
+            eb.setTitle("Season 2 Has Begun!");
+            eb.setDescription(ebDescription);
+
+            guild.getDefaultChannel().sendMessage(" ").setEmbeds(eb.build()).queue(s -> log.info("Season 2 Message Sent to Guild Default Channel"));
+
+            // Create Legacy Roles and Assign to Guild Members
+            List<SeasonRole> seasonRoleList = seasonRolesRepository.findAllBySeason("season_1").stream().filter(value -> !value.getSeason().contains("MAX")).sorted(Comparator.comparingInt(SeasonRole::getRoleOrder)).collect(Collectors.toList());
+
+            List<Role> guildRoles = new ArrayList<>();
             seasonRoleList.forEach(seasonRole -> {
                 var guildRole = guild.getRolesByName(seasonRole.getRoleName(), false).stream().findFirst();
                 if (guildRole.isPresent())
                     guildRoles.add(guildRole.get());
             });
 
+            List<Role> legacyRoles = new ArrayList<>();
             guildRoles.forEach(role -> {
                 var roleName = role.getName();
                 var roleColor = role.getColor();
                 var roleId = role.getIdLong();
 
-                AtomicReference<Role> legacyRole = null;
-
                 log.info("Season 1 Role Name: {}, Role Color: {}, Role Id: {}", roleName, roleColor, roleId);
-                guild.createRole().setName(String.format("S1_%s", roleName)).setColor(roleColor).queue(createdRole -> {
-                    legacyRole.set(createdRole);
-                    log.info("Created Legacy Role: {}", legacyRole.get().getName());
-                });
-
-                guild.getMembersWithRoles(role).forEach(member -> {
-                    log.info("Setting Legacy Role {} to Member {}", legacyRole.get().getName(), member.getEffectiveName());
-                    guild.addRoleToMember(member.getIdLong(), legacyRole.get()).queue();
-                });
+                guild.createRole().setName(String.format("S1_%s", roleName)).setColor(roleColor).submit()
+                        .whenComplete((legacyRole, error) -> {
+                            if (error != null) {
+                                error.printStackTrace();
+                            } else {
+                                log.info("Created Legacy Role: {}", legacyRole.getName());
+                                legacyRoles.add(legacyRole);
+                            }
+                        });
             });
+
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            log.info("Done Sleeping!");
 
             // Change to Season 2
             currentSeason.setValue("season_2");
@@ -1271,24 +1316,27 @@ public class MessageListener extends ListenerAdapter {
                 newArchive.setUserId(userInfo.getUserId());
                 newArchive.setUserName(userInfo.getUserName());
                 newArchive.setRank(userInfo.getRank());
+                log.info("newArchive - {}", newArchive.toString());
 
                 seasonArchiveRepository.save(newArchive);
 
             });
 
             // Reset USER_INFO Details
-            List<UserInfo> updatedUserInfoList = null;
+            List<UserInfo> updatedUserInfoList = new ArrayList<>();
 
             userInfoRepository.findAll().forEach(userInfo -> {
 
-                var bronzeRankValue = seasonRolesRepository.findAllBySeason("season_2").stream().filter(s -> s.getRoleName().equalsIgnoreCase("Bronze")).findFirst().get().getRoleValue();
-                var silverRankValue = seasonRolesRepository.findAllBySeason("season_2").stream().filter(s -> s.getRoleName().equalsIgnoreCase("Silver")).findFirst().get().getRoleValue();
+                var season1SilverRankValue = seasonRolesRepository.findAllBySeason("season_1").stream().filter(s -> s.getRoleName().equalsIgnoreCase("Silver")).findFirst().get().getRoleValue();
+
+                var season2BronzeRankValue = seasonRolesRepository.findAllBySeason("season_2").stream().filter(s -> s.getRoleName().equalsIgnoreCase("Bronze")).findFirst().get().getRoleValue();
+                var season2SilverRankValue = seasonRolesRepository.findAllBySeason("season_2").stream().filter(s -> s.getRoleName().equalsIgnoreCase("Silver")).findFirst().get().getRoleValue();
 
                 // Start Users out in Silver if at least Silver in Previous Season
-                if (userInfo.getRank() >= silverRankValue) {
-                    userInfo.setRank(silverRankValue);
+                if (userInfo.getRank() >= season1SilverRankValue) {
+                    userInfo.setRank(season2SilverRankValue);
                 } else {
-                    userInfo.setRank(bronzeRankValue);
+                    userInfo.setRank(season2BronzeRankValue);
                 }
 
                 // Reset the User Joined Timestamp
@@ -1301,40 +1349,42 @@ public class MessageListener extends ListenerAdapter {
                 }
 
                 updatedUserInfoList.add(userInfo);
+                log.info("userInfo - {}", userInfo.toString());
+
+                Member member = guild.getMemberById(userInfo.getUserId());
+                List<Role> memberRoles = member.getRoles();
+                log.info("member {} - memberRoles {}", member.getEffectiveName(), memberRoles.toString());
+
+                List<Role> addMemberRoles = new ArrayList<>();
+                List<Role> removeMemberRoles = new ArrayList<>();
+
+                memberRoles.forEach(role -> {
+                    if (role.getName().equalsIgnoreCase("Bronze")
+                            || role.getName().equalsIgnoreCase("Silver")
+                            || role.getName().equalsIgnoreCase("Gold")
+                            || role.getName().equalsIgnoreCase("Platinum")
+                            || role.getName().equalsIgnoreCase("Diamond")
+                            || role.getName().equalsIgnoreCase("Master")
+                            || role.getName().equalsIgnoreCase("GrandMaster")) {
+                        legacyRoles.forEach(l -> {
+                            if (l.getName().equalsIgnoreCase("S1_" + role.getName()))
+                                addMemberRoles.add(l);
+                        });
+                        removeMemberRoles.add(role);
+                    }
+                });
+
+                SeasonRole currentUserRank = userRankService.calculateRoleByRank(userInfo.getRank());
+                Role newGuildRole = guild.getRolesByName(currentUserRank.getRoleName(), false).get(0);
+                addMemberRoles.add(newGuildRole);
+
+                log.info("New Roles {}", addMemberRoles.toString());
+                log.info("Remove Roles {}", removeMemberRoles.toString());
+                guild.modifyMemberRoles(member, addMemberRoles, removeMemberRoles).queue();
 
             });
 
             userInfoRepository.saveAll(updatedUserInfoList);
-
-            // Send Season 2 Message to General Channel
-            var season2Message = "```\n" +
-                    "Season 2 is here!\n" +
-                    "With Season 2 we are resetting the Ranks and rebalancing them based on the Season 1 data.\n" +
-                    "\n" +
-                    "What Rank do we start at?\n" +
-                    " - If you made it to Silver last Season then you will start as Silver in Season 2.\n" +
-                    " - If you didn't get to Silver then you will start back as Bronze.\n" +
-                    "\n" +
-                    "Season 2 Updated Ranks:\n" +
-                    " - Bronze = 0\n" +
-                    " - Silver = 3\n" +
-                    " - Gold = 30\n" +
-                    " - Platinum = 100\n" +
-                    " - Diamond = 750\n" +
-                    " - Master = 2250\n" +
-                    " - GrandMaster = 6000\n" +
-                    "\n" +
-                    "Why are the lower Ranks so low?\n" +
-                    " - Looking at the data from Season 1, we had a lot of people that never got out of Bronze." +
-                    " We want to make these lower Ranks easier to achieve and while also increasing the difficulty a bit for the higher Ranks." +
-                    " These changes should help to have a more distributed base per Rank.\n" +
-                    "\n" +
-                    "What happens with my Season 1 Rank?\n" +
-                    " - Season 1 is over and the Rank that you achieved is important. We have created Legacy Season Roles! Take a look at your profile to see yours.\n" +
-                    "```";
-
-
-            guild.getDefaultChannel().sendMessage(season2Message).queue(s -> log.info("Season 2 Message Sent to Guild Default Channel"));
 
         }
 
