@@ -1240,11 +1240,11 @@ public class MessageListener extends ListenerAdapter {
                     "**What are the new Rank values?**\n" +
                     " - Bronze = 0\n" +
                     " - Silver = 3\n" +
-                    " - Gold = 30\n" +
-                    " - Platinum = 100\n" +
-                    " - Diamond = 750\n" +
-                    " - Master = 2250\n" +
-                    " - GrandMaster = 6000\n" +
+                    " - Gold = 15\n" +
+                    " - Platinum = 50\n" +
+                    " - Diamond = 375\n" +
+                    " - Master = 1125\n" +
+                    " - GrandMaster = 3000\n" +
                     "\n" +
                     "**Why did the Ranks change?**\n" +
                     " - Looking at the data from Season 1, we had a lot of people that never got out of Bronze." +
@@ -1255,7 +1255,7 @@ public class MessageListener extends ListenerAdapter {
                     " - Season 1 is over and the Rank that you achieved is important. We have created Legacy Season Roles! Take a look at your profile to see yours.\n" +
                     "\n" +
                     "**How long will Season 2 last?**\n" +
-                    " - Season 2's Ranks are based around the Season lasting a year. If the Season is shortened the Rank values will be adjusted accordingly.\n" +
+                    " - Season 2's Ranks are based around the Season lasting 6 months.\n" +
                     "\n" +
                     "\n" +
                     "**Do you have what it takes to reach GrandMaster?**";
