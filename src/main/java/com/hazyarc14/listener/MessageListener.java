@@ -116,6 +116,15 @@ public class MessageListener extends ListenerAdapter {
 
                 sendHelpMessage(event, isPrivate);
 
+            } else if (commandList[0].equalsIgnoreCase("!sendSeason2Message") && (event.getAuthor().getIdLong() == 148630426548699136L)) {
+
+                if (isPrivate) {
+                    event.getPrivateChannel().sendMessage("Not able to use this command in Direct Messages").queue();
+                } else {
+                    message.delete().queue();
+                    sendSeason2Message(event);
+                }
+
             } else if (commandList[0].equalsIgnoreCase("!startSeason2") && (event.getAuthor().getIdLong() == 148630426548699136L)) {
 
                 if (isPrivate) {
@@ -1213,6 +1222,62 @@ public class MessageListener extends ListenerAdapter {
         if (!audioManager.isConnected()) {
             audioManager.openAudioConnection(voiceChannel);
         }
+
+    }
+
+    public void sendSeason2Message(MessageReceivedEvent event) {
+
+        log.info("Sending Season 2 Message");
+
+        var guild = event.getGuild();
+
+        // Send Season 2 Message to General Channel
+        var ebDescription =
+                "**With Season 2 we are resetting the Ranks and rebalancing them based on the Season 1 data.**\n" +
+                        "\n" +
+                        "**What Rank do we start at?**\n" +
+                        " - If you made it to Silver last Season then you will start as Silver in Season 2.\n" +
+                        " - If you didn't get to Silver then you will start back as Bronze.\n" +
+                        "\n" +
+                        "**What are the new Rank values?**\n" +
+                        " - Bronze = 0\n" +
+                        " - Silver = 3\n" +
+                        " - Gold = 15\n" +
+                        " - Platinum = 50\n" +
+                        " - Diamond = 375\n" +
+                        " - Master = 1125\n" +
+                        " - GrandMaster = 3000\n" +
+                        "\n" +
+                        "**Why did the Ranks change?**\n" +
+                        " - Looking at the data from Season 1, we had a lot of people that never got out of Bronze." +
+                        " We want to make these lower Ranks easier to achieve and while also increasing the difficulty a bit for the higher Ranks." +
+                        " These changes should help to have a more distributed base per Rank.\n" +
+                        "\n" +
+                        "**What happens with my Season 1 Rank?**\n" +
+                        " - Season 1 is over and the Rank that you achieved is important. We have created Legacy Season Roles! Take a look at your profile to see yours.\n" +
+                        "\n" +
+                        "**How long will Season 2 last?**\n" +
+                        " - Season 2's Ranks are based around the Season lasting 6 months.\n" +
+                        "\n" +
+                        "\n" +
+                        "**Do you have what it takes to reach GrandMaster?**";
+
+        EmbedBuilder eb = new EmbedBuilder();
+
+        eb.setColor(new Color(0, 255, 255));
+        eb.setTitle("Season 2 Has Begun!");
+        eb.setDescription(ebDescription);
+
+        guild.getDefaultChannel().sendMessage(" ").setEmbeds(eb.build()).queue(s -> log.info("Season 2 Message Sent to Guild Default Channel"));
+
+        seasonArchiveRepository.findAll().forEach(seasonArchiveUser -> {
+            if (seasonArchiveUser.getRank() >= 500) {
+                Member member = guild.getMemberById(seasonArchiveUser.getUserId());
+                member.getUser().openPrivateChannel().queue(privateChannel -> {
+                    privateChannel.sendMessage(" ").setEmbeds(eb.build()).queue(s -> log.info("Season 2 Message Sent to {}", member.getEffectiveName()));
+                });
+            }
+        });
 
     }
 
